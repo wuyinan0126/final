@@ -61,7 +61,7 @@ DEFAULTS = {
     'rnn_type': 'lstm',
     'embedding_size_w': 300,
     'embedding_size_c': 100,
-    'hidden_size': 256,
+    'hidden_size': 128,
     'num_layers_d': 3,
     'num_layers_q': 3,
     'kernel_sizes': '[1, 2, 3, 4]',
