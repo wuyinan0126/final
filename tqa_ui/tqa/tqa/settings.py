@@ -1,5 +1,5 @@
 """
-Django settings for simpleqa project.
+Django settings for tqa project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.7/topics/settings/
@@ -54,9 +54,9 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'simpleqa.urls'
+ROOT_URLCONF = 'tqa.urls'
 
-WSGI_APPLICATION = 'simpleqa.wsgi.application'
+WSGI_APPLICATION = 'tqa.wsgi.application'
 
 
 # Database

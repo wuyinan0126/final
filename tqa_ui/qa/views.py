@@ -244,13 +244,13 @@ class TqaThread(threading.Thread):
         # result = question_title + question_text
         payload = {'q': question_title}
         url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
-        results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+        # results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
         answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
-        # results = json.loads(
-        #     '{"answers": [['
-        #     '{"score": 0.5, "answer": "答案1", "text": "文本1文本1文本1文本1文本1文本1文本1文本1", "id": "https://zh.wikipedia.org/wiki?curid=1@测试1"},'
-        #     '{"score": 0.4, "answer": "答案2", "text": "文本2文本2文本2文本2文本2文本2文本2文本2", "id": "course/subdir/测试2.pptx"}'
-        #     ']]}', encoding="utf-8")
+        results = json.loads(
+            '{"answers": [['
+            '{"score": 0.5, "answer": "答案1", "text": "文本1文本1文本1文本1文本1文本1文本1文本1", "id": "https://zh.wikipedia.org/wiki?curid=1@测试1"},'
+            '{"score": 0.4, "answer": "答案2", "text": "文本2文本2文本2文本2文本2文本2文本2文本2", "id": "course/subdir/测试2.pptx"}'
+            ']]}', encoding="utf-8")
         for result in results['answers'][0]:
             if 'wiki' in result['id']:
                 url_word = result['id'].split('@')
