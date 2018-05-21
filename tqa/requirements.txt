@@ -1,0 +1,18 @@
+# torch for linux, python3.6, cuda8.0
+# pip3 install http://download.pytorch.org/whl/cu80/torch-0.3.1-cp36-cp36m-linux_x86_64.whl
+# torch for osx, python3.6, no cuda
+# pip3 install http://download.pytorch.org/whl/torch-0.3.1-cp36-cp36m-macosx_10_7_x86_64.whl
+
+matplotlib
+numpy
+scikit-learn
+termcolor
+regex
+tqdm
+prettytable
+scipy
+nltk
+pexpect
+
+# install only on dev
+# python-pptx
