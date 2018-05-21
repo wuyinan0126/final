@@ -219,57 +219,6 @@ class StackedBiRnnLayer(nn.Module):
         return output.contiguous()
 
 
-class SelfAlignLayer(nn.Module):
-    """
-
-    """
-
-    def __init__(self, input_size):
-        super(SelfAlignLayer, self).__init__()
-        self.linear = nn.Linear(input_size, input_size)
-
-    def forward(self, d_embedding, d_mask):
-        """
-        :param d_embedding:     batch * max_document_length * embedding_size
-        :param q_embedding:     batch * max_question_length * embedding_size
-        :param d_mask:          batch * max_question_length (1 for padding, 0 for true)
-        :return: align_feature: batch * max_document_length * embedding_size
-        """
-
-        max_document_length = d_embedding.size(1)
-
-        # 用线性和非线性函数project embedding vectors
-        # 先转成(batch * max_document_length) * embedding_size输入liner层，得到相同维度的输出，在转回原始维度
-        # 可以直接self.linear(d_embedding)
-        d_projection = self.linear(d_embedding.view(-1, d_embedding.size(2))).view(d_embedding.size())
-        d_projection = F.relu(d_projection)
-
-        # 计算scores：[batch * max_document_length * embedding_size].bmm[batch * embedding_size * max_document_length]
-        # scores: [batch * max_document_length * max_document_length]
-        scores = d_projection.bmm(d_projection.transpose(2, 1))
-
-        scores = scores * Variable(
-            (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(scores.size())).cuda()
-
-        # unsqueeze(1)在1位置加入一维，从batch * max_document_length => batch * 1 * max_document_length
-        # expand()将刚加入的一维复制数据扩展成max_document_length => batch * max_document_length * max_document_length
-        d_mask = d_mask.unsqueeze(1).expand(scores.size())
-        # masked_fill_: 保留scores中对应mask为0的地方，为1的地方赋为-float('inf')
-        scores.data.masked_fill_(d_mask.data, -float('inf'))
-
-        # 将scores转换为(batch * max_document_length) * max_document_length，对max_document_length维使用softmax
-        # 可以直接F.softmax(scores, 2)
-        # alpha: [batch * max_document_length * max_document_length]
-        alpha = F.softmax(scores.view(-1, d_embedding.size(1)), dim=1) \
-            .view(-1, d_embedding.size(1), d_embedding.size(1))
-
-        # 使用attention机制对d_embedding每个词向量加权
-        # [batch * max_document_length * max_document_length].bmm[batch * max_document_length * embedding_size]
-        # align_feature: batch * max_document_length * embedding_size
-        align_feature = alpha.bmm(d_embedding)
-        return align_feature, alpha
-
-
 class SelfAttentionLayer(nn.Module):
     """ self attention over a sequence:
     * o_i = softmax(Wx_i) for x_i in X.
@@ -325,11 +274,58 @@ class BiLinearAttentionLayer(nn.Module):
         return alpha
 
 
+class SelfAlignLayer(nn.Module):
+    """
+
+    """
+
+    def __init__(self, input_size):
+        super(SelfAlignLayer, self).__init__()
+        self.linear = nn.Linear(input_size, input_size)
+
+    def forward(self, d_embedding, d_mask):
+        """
+        :param d_embedding:     batch * max_document_length * embedding_size
+        :param q_embedding:     batch * max_question_length * embedding_size
+        :param d_mask:          batch * max_question_length (1 for padding, 0 for true)
+        :return: align_feature: batch * max_document_length * embedding_size
+        """
+
+        max_document_length = d_embedding.size(1)
+
+        # 用线性和非线性函数project embedding vectors
+        # 先转成(batch * max_document_length) * embedding_size输入liner层，得到相同维度的输出，在转回原始维度
+        # 可以直接self.linear(d_embedding)
+        d_projection = self.linear(d_embedding.view(-1, d_embedding.size(2))).view(d_embedding.size())
+        d_projection = F.relu(d_projection)
+
+        # 计算scores：[batch * max_document_length * embedding_size].bmm[batch * embedding_size * max_document_length]
+        # scores: [batch * max_document_length * max_document_length]
+        scores = d_projection.bmm(d_projection.transpose(2, 1))
+
+        scores = scores * Variable(
+            (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(scores.size()), requires_grad=False).cuda()
+
+        # unsqueeze(1)在1位置加入一维，从batch * max_document_length => batch * 1 * max_document_length
+        # expand()将刚加入的一维复制数据扩展成max_document_length => batch * max_document_length * max_document_length
+        d_mask = d_mask.unsqueeze(1).expand(scores.size())
+        # masked_fill_: 保留scores中对应mask为0的地方，为1的地方赋为-float('inf')
+        scores.data.masked_fill_(d_mask.data, -float('inf'))
+
+        # 将scores转换为(batch * max_document_length) * max_document_length，对max_document_length维使用softmax
+        # 可以直接F.softmax(scores, 2)
+        # alpha: [batch * max_document_length * max_document_length]
+        alpha = F.softmax(scores.view(-1, d_embedding.size(1)), dim=1) \
+            .view(-1, d_embedding.size(1), d_embedding.size(1))
+
+        # 使用attention机制对d_embedding每个词向量加权
+        # [batch * max_document_length * max_document_length].bmm[batch * max_document_length * embedding_size]
+        # align_feature: batch * max_document_length * embedding_size
+        align_feature = alpha.bmm(d_embedding)
+        return align_feature, alpha
+
+
 class ReattentionLayer(nn.Module):
-    """
-
-    """
-
     def __init__(self, hidden_size):
         super(ReattentionLayer, self).__init__()
         self.linear = nn.Linear(hidden_size, hidden_size)
@@ -348,13 +344,17 @@ class ReattentionLayer(nn.Module):
         max_document_length = d_hiddens.size(1)
 
         # E_tt: batch * max_document_length * max_question_length
-        E_tt = (F.softmax(e_alpha.transpose(1, 2), dim=2).bmm(F.softmax(b_alpha, dim=1))).transpose(1, 2)
+        E_tt = (F.softmax(e_alpha.transpose(1, 2), dim=2)
+                .bmm(F.softmax(b_alpha.transpose(1, 2), dim=1))).transpose(1, 2)
 
+        # d_projection: batch * max_document_length * (hidden_size * 2 * num_layers)
         d_projection = self.linear(d_hiddens.view(-1, d_hiddens.size(2))).view(d_hiddens.size())
         d_projection = F.relu(d_projection)
+        # q_projection: batch * max_question_length * (hidden_size * 2 * num_layers)
         q_projection = self.linear(q_hiddens.view(-1, q_hiddens.size(2))).view(q_hiddens.size())
         q_projection = F.relu(q_projection)
 
+        # scores: batch * max_document_length * max_question_length
         scores = d_projection.bmm(q_projection.transpose(2, 1))
 
         q_mask = q_mask.unsqueeze(1).expand(scores.size())
@@ -387,7 +387,7 @@ class ReattentionLayer(nn.Module):
 
         # B_t: batch * max_document_length * max_document_length
         B_t = B_f + gamma * B_tt * Variable(
-            (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(B_tt.size())).cuda()
+            (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(B_tt.size()), requires_grad=False).cuda()
 
         # align_ht: batch * max_document_length * (hidden_size * 2 * num_layers)
         align_ht = B_t.bmm(H_t)
