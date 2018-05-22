@@ -109,8 +109,8 @@ class AlignFeatureLayer(nn.Module):
         # 将scores转换为(batch * max_document_length) * max_question_length，对max_question_length维使用softmax
         # 可以直接F.softmax(scores, 2)
         # alpha: [batch * max_document_length * max_question_length]
-        alpha = F.softmax(scores.view(-1, q_embedding.size(1)), dim=1).view(-1, d_embedding.size(1),
-                                                                            q_embedding.size(1))
+        alpha = F.softmax(scores.view(-1, q_embedding.size(1)), dim=1) \
+            .view(-1, d_embedding.size(1), q_embedding.size(1))
 
         # 使用attention机制对q_embedding每个词向量加权
         # [batch * max_document_length * max_question_length].bmm[batch * max_question_length * embedding_size]
@@ -275,10 +275,6 @@ class BiLinearAttentionLayer(nn.Module):
 
 
 class SelfAlignLayer(nn.Module):
-    """
-
-    """
-
     def __init__(self, input_size):
         super(SelfAlignLayer, self).__init__()
         self.linear = nn.Linear(input_size, input_size)
@@ -305,6 +301,7 @@ class SelfAlignLayer(nn.Module):
 
         scores = scores * Variable(
             (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(scores.size()), requires_grad=False).cuda()
+        print(scores.data)
 
         # unsqueeze(1)在1位置加入一维，从batch * max_document_length => batch * 1 * max_document_length
         # expand()将刚加入的一维复制数据扩展成max_document_length => batch * max_document_length * max_document_length
@@ -342,6 +339,7 @@ class ReattentionLayer(nn.Module):
         :return alpha       batch * max_document_length
         """
         max_document_length = d_hiddens.size(1)
+        max_question_length = q_hiddens.size(1)
 
         # E_tt: batch * max_document_length * max_question_length
         E_tt = (F.softmax(e_alpha.transpose(1, 2), dim=2)
@@ -356,29 +354,32 @@ class ReattentionLayer(nn.Module):
 
         # scores: batch * max_document_length * max_question_length
         scores = d_projection.bmm(q_projection.transpose(2, 1))
-
+        # q_mask: batch * max_question_length => batch * max_document_length * max_question_length
         q_mask = q_mask.unsqueeze(1).expand(scores.size())
         scores.data.masked_fill_(q_mask.data, -float('inf'))
 
         # E_f: batch * max_document_length * max_question_length
-        E_f = F.softmax(scores.view(-1, q_hiddens.size(1)), dim=1) \
-            .view(-1, d_hiddens.size(1), q_hiddens.size(1))
+        E_f = F.softmax(scores.view(-1, max_question_length), dim=1) \
+            .view(-1, max_document_length, max_question_length)
 
         # E_t: batch * max_document_length * max_question_length
         E_t = E_f + gamma * E_tt
+
         # H_t: [batch * max_document_length * max_question_length].bmm[batch * max_question_length * (hidden_size * 2 * num_layers)]
         # => batch * max_document_length * (hidden_size * 2 * num_layers)
         H_t = E_f.bmm(q_hiddens)
 
         # B_tt: batch * max_document_length * max_document_length
-        B_tt = (F.softmax(b_alpha.transpose(1, 2), dim=2).bmm(F.softmax(b_alpha, dim=1))).transpose(1, 2)
+        B_tt = (F.softmax(b_alpha.transpose(1, 2), dim=2)
+                .bmm(F.softmax(b_alpha.transpose(1, 2), dim=1))).transpose(1, 2)
+
         # H_t_projection: batch * max_document_length * (hidden_size * 2 * num_layers)
         H_t_projection = self.linear(H_t.view(-1, H_t.size(2))).view(H_t.size())
         H_t_projection = F.relu(H_t_projection)
 
         # scores: batch * max_document_length * max_document_length
         scores = H_t_projection.bmm(H_t_projection.transpose(2, 1))
-
+        # d_mask: batch * max_document_length => batch * max_document_length * max_document_length
         d_mask = d_mask.unsqueeze(1).expand(scores.size())
         scores.data.masked_fill_(d_mask.data, -float('inf'))
 
@@ -386,7 +387,7 @@ class ReattentionLayer(nn.Module):
         B_f = F.softmax(scores.view(-1, H_t.size(1)), dim=1).view(-1, H_t.size(1), H_t.size(1))
 
         # B_t: batch * max_document_length * max_document_length
-        B_t = B_f + gamma * B_tt * Variable(
+        B_t = (B_f + gamma * B_tt) * Variable(
             (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(B_tt.size()), requires_grad=False).cuda()
 
         # align_ht: batch * max_document_length * (hidden_size * 2 * num_layers)

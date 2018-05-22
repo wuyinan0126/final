@@ -479,7 +479,7 @@ class RnnEncoder(nn.Module):
         if args.use_reattention:
             self.first_round_attention_E = AlignFeatureLayer(document_hidden_size)
             self.first_round_attention_B = SelfAlignLayer(document_hidden_size)
-            self.gamma = Variable(torch.FloatTensor([1]), requires_grad=True).cuda()
+            self.gamma = Variable(torch.FloatTensor([0.5]), requires_grad=True).cuda()
             # self.gamma = self.args.gamma
             self.reattention = ReattentionLayer(document_hidden_size)
 
@@ -556,32 +556,29 @@ class RnnEncoder(nn.Module):
         # logger.info('Actual question features size: %d' % q_rnn_input.size(2))
         q_hiddens = self.rnn_question_encoder(q_rnn_input, q_mask)
 
+        # 对q_hiddens进行self attention merge到batch * max_question_length
+        q_merge_weights = self.self_attention(q_hiddens, q_mask)
+        # [batch * 1 * max_question_length].bmm[batch * seq_len * (hidden_size * 2 * num_layers)]
+        # = [batch * 1 * (hidden_size * 2 * num_layers)] =>
+        # question_hidden: [batch * (hidden_size * 2 * num_layers)]
+        q_hidden = q_merge_weights.unsqueeze(1).bmm(q_hiddens).squeeze(1)
+
         if self.args.use_reattention:
+            # e_alpha: batch * max_document_length * max_question_length
             aligned_hiddens, e_alpha = self.first_round_attention_E(d_hiddens, q_hiddens, q_mask)
+            # b_alpha: batch * max_document_length * max_document_length
             aligned_hiddens, b_alpha = self.first_round_attention_B(aligned_hiddens, d_mask)
 
             for i in range(self.args.reattention_round):
+                # aligned_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
                 e_alpha, b_alpha, aligned_hiddens = self.reattention(
                     q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, self.gamma
                 )
-
-            q_merge_weights = self.self_attention(q_hiddens, q_mask)
-            # [batch * 1 * max_question_length].bmm[batch * seq_len * (hidden_size * 2 * num_layers)]
-            # = [batch * 1 * (hidden_size * 2 * num_layers)] =>
-            # question_hidden: [batch * (hidden_size * 2 * num_layers)]
-            q_hidden = q_merge_weights.unsqueeze(1).bmm(q_hiddens).squeeze(1)
 
             # 预测答案span的开始和结束的index
             scores_start = self.start_attention(aligned_hiddens, q_hidden, d_mask)
             scores_end = self.end_attention(aligned_hiddens, q_hidden, d_mask)
         else:
-            # 对q_hiddens进行self attention merge到batch * max_question_length
-            q_merge_weights = self.self_attention(q_hiddens, q_mask)
-            # [batch * 1 * max_question_length].bmm[batch * seq_len * (hidden_size * 2 * num_layers)]
-            # = [batch * 1 * (hidden_size * 2 * num_layers)] =>
-            # question_hidden: [batch * (hidden_size * 2 * num_layers)]
-            q_hidden = q_merge_weights.unsqueeze(1).bmm(q_hiddens).squeeze(1)
-
             # 预测答案span的开始和结束的index
             scores_start = self.start_attention(d_hiddens, q_hidden, d_mask)
             scores_end = self.end_attention(d_hiddens, q_hidden, d_mask)
