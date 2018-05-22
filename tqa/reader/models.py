@@ -479,8 +479,7 @@ class RnnEncoder(nn.Module):
         if args.use_reattention:
             self.first_round_attention_E = AlignFeatureLayer(document_hidden_size)
             self.first_round_attention_B = SelfAlignLayer(document_hidden_size)
-            self.gamma = Variable(torch.FloatTensor([0.5]), requires_grad=True).cuda()
-            # self.gamma = self.args.gamma
+            self.gamma = Variable(torch.FloatTensor([self.args.gamma]), requires_grad=True).cuda()
             self.reattention = ReattentionLayer(document_hidden_size)
 
     def forward(self, f, d_w, d_mask, q_w, q_mask, d_c, q_c):
@@ -565,6 +564,7 @@ class RnnEncoder(nn.Module):
 
         if self.args.use_reattention:
             # e_alpha: batch * max_document_length * max_question_length
+            # aligned_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
             aligned_hiddens, e_alpha = self.first_round_attention_E(d_hiddens, q_hiddens, q_mask)
             # b_alpha: batch * max_document_length * max_document_length
             aligned_hiddens, b_alpha = self.first_round_attention_B(aligned_hiddens, d_mask)
