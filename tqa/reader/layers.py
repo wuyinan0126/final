@@ -326,7 +326,7 @@ class ReattentionLayer(nn.Module):
         super(ReattentionLayer, self).__init__()
         self.linear = nn.Linear(hidden_size, hidden_size)
 
-    def forward(self, q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, gamma):
+    def forward(self, q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, e_gamma, b_gamma):
         """
         :param q_hiddens:   batch * max_question_length * (hidden_size * 2 * num_layers)
         :param d_hiddens:   batch * max_document_length * (hidden_size * 2 * num_layers)
@@ -334,7 +334,6 @@ class ReattentionLayer(nn.Module):
         :param d_mask:      batch * max_document_length (1 for padding, 0 for true)
         :param e_alpha:     batch * max_document_length * max_question_length
         :param b_alpha:     batch * max_document_length * max_document_length
-        :param gamma:
         :return alpha       batch * max_document_length
         """
         max_document_length = d_hiddens.size(1)
@@ -362,7 +361,7 @@ class ReattentionLayer(nn.Module):
             .view(-1, max_document_length, max_question_length)
 
         # E_t: batch * max_document_length * max_question_length
-        E_t = E_f + gamma * E_tt
+        E_t = E_f + e_gamma * E_tt
 
         # H_t: [batch * max_document_length * max_question_length].bmm[batch * max_question_length * (hidden_size * 2 * num_layers)]
         # => batch * max_document_length * (hidden_size * 2 * num_layers)
@@ -386,7 +385,7 @@ class ReattentionLayer(nn.Module):
         B_f = F.softmax(scores.view(-1, H_t.size(1)), dim=1).view(-1, H_t.size(1), H_t.size(1))
 
         # B_t: batch * max_document_length * max_document_length
-        B_t = (B_f + gamma * B_tt) * Variable(
+        B_t = (B_f + b_gamma * B_tt) * Variable(
             (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(B_tt.size()), requires_grad=False).cuda()
 
         # align_ht: batch * max_document_length * (hidden_size * 2 * num_layers)

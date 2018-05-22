@@ -479,7 +479,8 @@ class RnnEncoder(nn.Module):
         if args.use_reattention:
             self.first_round_attention_E = AlignFeatureLayer(document_hidden_size)
             self.first_round_attention_B = SelfAlignLayer(document_hidden_size)
-            self.gamma = Variable(torch.FloatTensor([self.args.gamma]), requires_grad=True).cuda()
+            self.gamma_e = Variable(torch.FloatTensor([self.args.gamma_e]), requires_grad=True).cuda()
+            self.gamma_b = Variable(torch.FloatTensor([self.args.gamma_b]), requires_grad=True).cuda()
             self.reattention = ReattentionLayer(document_hidden_size)
 
     def forward(self, f, d_w, d_mask, q_w, q_mask, d_c, q_c):
@@ -572,7 +573,7 @@ class RnnEncoder(nn.Module):
             for i in range(self.args.reattention_round):
                 # aligned_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
                 e_alpha, b_alpha, aligned_hiddens = self.reattention(
-                    q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, self.gamma
+                    q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, self.gamma_e, self.gamma_b
                 )
 
             # 预测答案span的开始和结束的index

@@ -113,8 +113,10 @@ def prepare_args(parser):
                             help='使用多层attention')
     model_arch.add_argument('--reattention-round', type=int, default=DEFAULTS['reattention_round'],
                             help='多层attention数')
-    model_arch.add_argument('--gamma', type=int, default=DEFAULTS['gamma'],
-                            help='gamma常数')
+    model_arch.add_argument('--gamma-e', type=float, default=DEFAULTS['gamma_e'],
+                            help='gamma_e')
+    model_arch.add_argument('--gamma-b', type=float, default=DEFAULTS['gamma_b'],
+                            help='gamma_b')
 
     # ------------------------------------------------------------------------------
     # 特征选择相关

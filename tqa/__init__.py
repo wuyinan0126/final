@@ -69,7 +69,8 @@ DEFAULTS = {
     'num_layers_c': 2,
     'use_reattention': True,
     'reattention_round': 0,
-    'gamma': 0.5,
+    'gamma_e': 0.5,
+    'gamma_b': 0.5,
     # 特征选择相关
     'use_align': True,
     'use_exact_match': True,
