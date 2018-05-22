@@ -301,7 +301,6 @@ class SelfAlignLayer(nn.Module):
 
         scores = scores * Variable(
             (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(scores.size()), requires_grad=False).cuda()
-        print(scores.data)
 
         # unsqueeze(1)在1位置加入一维，从batch * max_document_length => batch * 1 * max_document_length
         # expand()将刚加入的一维复制数据扩展成max_document_length => batch * max_document_length * max_document_length
