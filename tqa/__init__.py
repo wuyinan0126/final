@@ -40,7 +40,7 @@ DEFAULTS = {
     'gpu_device': 0,
     'gpu_parallel': False,
     'random_seed': 126,  # 为了可重现性
-    'batch_size': 10,
+    'batch_size': 16,
     'data_loaders': 10,
     'num_epochs': 40,
     'log_every_num_batches': 50,
