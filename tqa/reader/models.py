@@ -508,8 +508,8 @@ class RnnEncoder(nn.Module):
 
         # 构建文档的d_rnn_input: [d_embedding, align_feature, f]:
         # d_rnn_input: batch * max_document_length * [embedding_size + embedding_size + feature_fields长度]
-        d_rnn_inputs = [d_w_embedding]
-        q_rnn_inputs = [q_w_embedding]
+        d_rnn_inputs = []
+        q_rnn_inputs = []
 
         # --------------------------------------------------------------------------
         # 对齐特征（文档）

@@ -81,7 +81,7 @@ DEFAULTS = {
     # 优化相关
     'tune_top_k': 10000,
     'optimizer': 'adamax',
-    'learning_rate': 0.001,
+    'learning_rate': 0.0003,
     'momentum': 0,
     'weight_decay': 0,
     'embedding_dropout_rate': 0.3,
