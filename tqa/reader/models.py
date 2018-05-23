@@ -424,8 +424,14 @@ class RnnEncoder(nn.Module):
 
         # 对齐特征层
         if args.use_align:
-            self.align_feature_layer = AlignFeatureLayer(args.embedding_size_w)
-            self.self_align_layer = SelfAlignLayer(args.embedding_size_w)
+            self.first_round_attention_E = AlignFeatureLayer(args.embedding_size_w)
+            self.first_round_attention_B = SelfAlignLayer(args.embedding_size_w)
+
+        # re-attention
+        if args.use_reattention:
+            self.gamma_e = Variable(torch.FloatTensor([self.args.gamma_e]), requires_grad=True).cuda()
+            self.gamma_b = Variable(torch.FloatTensor([self.args.gamma_b]), requires_grad=True).cuda()
+            self.reattention = ReattentionLayer(args.embedding_size_w)
 
         # 输入到rnn_document_encoder的向量长度: d_embedding_size + d_embedding_size + extra_features_size + cnn_size
         document_rnn_input_size = args.embedding_size_w + args.num_extra_features
@@ -476,13 +482,6 @@ class RnnEncoder(nn.Module):
         self.start_attention = BiLinearAttentionLayer(document_hidden_size, question_hidden_size)
         self.end_attention = BiLinearAttentionLayer(document_hidden_size, question_hidden_size)
 
-        if args.use_reattention:
-            self.first_round_attention_E = AlignFeatureLayer(args.embedding_size_w)
-            self.first_round_attention_B = SelfAlignLayer(args.embedding_size_w)
-            self.gamma_e = Variable(torch.FloatTensor([self.args.gamma_e]), requires_grad=True).cuda()
-            self.gamma_b = Variable(torch.FloatTensor([self.args.gamma_b]), requires_grad=True).cuda()
-            self.reattention = ReattentionLayer(args.embedding_size_w)
-
     def forward(self, f, d_w, d_mask, q_w, q_mask, d_c, q_c):
         """ 输入：
         :param f        额外特征           batch * max_document_length * feature_fields长度
@@ -515,23 +514,18 @@ class RnnEncoder(nn.Module):
         # --------------------------------------------------------------------------
         # 对齐特征（文档）
         # 使用attention机制对q_embedding每个词向量加权，得到问题的对齐特征
-        # align_feature: batch * max_document_length * embedding_size
-        # if self.args.use_align:
-        # align_feature, _ = self.align_feature_layer(d_w_embedding, q_w_embedding, q_mask)
-        ##align_feature, _ = self.self_align_layer(align_feature, d_mask)
-        # d_rnn_inputs.append(align_feature)
-
-        if self.args.use_reattention:
+        if self.args.use_align:
             # align_feature: batch * max_document_length * embedding_size
             # e_alpha: batch * max_document_length * max_question_length
             align_feature, e_alpha = self.first_round_attention_E(d_w_embedding, q_w_embedding, q_mask)
             # b_alpha: batch * max_document_length * max_document_length
             align_feature, b_alpha = self.first_round_attention_B(align_feature, d_mask)
 
-            for i in range(self.args.reattention_round):
-                e_alpha, b_alpha, align_feature = self.reattention(
-                    q_w_embedding, align_feature, q_mask, d_mask, e_alpha, b_alpha, self.gamma_e, self.gamma_b
-                )
+            if self.args.use_reattention:
+                for i in range(self.args.reattention_round):
+                    e_alpha, b_alpha, align_feature = self.reattention(
+                        q_w_embedding, align_feature, q_mask, d_mask, e_alpha, b_alpha, self.gamma_e, self.gamma_b
+                    )
             # align_feature: batch * max_document_length * embedding_size
             d_rnn_inputs.append(align_feature)
 
@@ -577,24 +571,6 @@ class RnnEncoder(nn.Module):
         # question_hidden: [batch * (hidden_size * 2 * num_layers)]
         q_hidden = q_merge_weights.unsqueeze(1).bmm(q_hiddens).squeeze(1)
 
-        # if self.args.use_reattention:
-        #     # e_alpha: batch * max_document_length * max_question_length
-        #     # aligned_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
-        #     aligned_hiddens, e_alpha = self.first_round_attention_E(d_hiddens, q_hiddens, q_mask)
-        #     # b_alpha: batch * max_document_length * max_document_length
-        #     aligned_hiddens, b_alpha = self.first_round_attention_B(aligned_hiddens, d_mask)
-        #
-        #     for i in range(self.args.reattention_round):
-        #         # aligned_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
-        #         e_alpha, b_alpha, aligned_hiddens = self.reattention(
-        #             q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, self.gamma_e, self.gamma_b
-        #         )
-        #
-        #     # 预测答案span的开始和结束的index
-        #     scores_start = self.start_attention(aligned_hiddens, q_hidden, d_mask)
-        #     scores_end = self.end_attention(aligned_hiddens, q_hidden, d_mask)
-        # else:
-        # 预测答案span的开始和结束的index
         scores_start = self.start_attention(d_hiddens, q_hidden, d_mask)
         scores_end = self.end_attention(d_hiddens, q_hidden, d_mask)
 
