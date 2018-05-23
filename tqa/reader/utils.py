@@ -463,7 +463,7 @@ def batchify(batch):
     # ------------------------------------------------------------------------------
     # Char CNN相关
     # batch的seq中单词的最小长度，因为经过卷积后单词的长度变为max_seq_word_length - kernel_size + 1
-    min_words_length = 7
+    min_words_length = 6
     # batch的文档中单词的最大长度
     d_max_words_length = max([max([len(word) for word in document]) for document in d_chars_indices])
     d_max_words_length = d_max_words_length if d_max_words_length >= min_words_length else min_words_length
