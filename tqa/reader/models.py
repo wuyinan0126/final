@@ -518,10 +518,11 @@ class RnnEncoder(nn.Module):
             # align_feature: batch * max_document_length * embedding_size
             # e_alpha: batch * max_document_length * max_question_length
             align_feature, e_alpha = self.first_round_attention_E(d_w_embedding, q_w_embedding, q_mask)
-            # b_alpha: batch * max_document_length * max_document_length
-            align_feature, b_alpha = self.first_round_attention_B(align_feature, d_mask)
 
             if self.args.use_reattention:
+                # b_alpha: batch * max_document_length * max_document_length
+                align_feature, b_alpha = self.first_round_attention_B(align_feature, d_mask)
+
                 for i in range(self.args.reattention_round):
                     e_alpha, b_alpha, align_feature = self.reattention(
                         q_w_embedding, align_feature, q_mask, d_mask, e_alpha, b_alpha, self.gamma_e, self.gamma_b
