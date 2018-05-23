@@ -513,7 +513,7 @@ class RnnEncoder(nn.Module):
 
         # --------------------------------------------------------------------------
         # 对齐特征（文档）
-        # 使用attention机制对q_embedding每个词向量加权，得到问题的对齐特征
+        # 使用attention机制对d_embedding每个词向量加权，得到对齐特征
         if self.args.use_align:
             # align_feature: batch * max_document_length * embedding_size
             # e_alpha: batch * max_document_length * max_question_length

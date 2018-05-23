@@ -1,28 +1,22 @@
-import json
 import operator
-import threading
-import urllib
 from functools import reduce
-from time import sleep
-from urllib.parse import urlencode, quote_plus
 
-import os
 from django.conf import settings
-from django.contrib.auth import get_user_model, authenticate
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.urls import reverse
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.generic import CreateView, ListView, UpdateView, View
 from hitcount.views import HitCountDetailView
-from qa.models import (Answer, AnswerComment, AnswerVote, Question,
+from .models import (Answer, AnswerComment, AnswerVote, Question,
                        QuestionComment, QuestionVote, UserQAProfile)
 from taggit.models import Tag, TaggedItem
 
+from tqa_ui.tqa.core.tqa_core import TqaThread
 from .forms import QuestionForm
 from .mixins import AuthorRequiredMixin, LoginRequired
 from .utils import question_score
@@ -224,52 +218,6 @@ class QuestionsByTagView(ListView):
         context['totalnoans'] = len(context['noans'])
         return context
 
-
-# ------------------------------------------------------------------------------
-# 自动回答线程 Begin
-# ------------------------------------------------------------------------------
-
-class TqaThread(threading.Thread):
-    def __init__(self, question):
-        super().__init__()
-        self.question = question
-        self.user = User.objects.get(pk=1)
-
-    def run(self):
-        answer = Answer()
-        answer.question = self.question
-        answer.user = self.user
-        question_title = self.question.title
-        question_text = self.question.description
-        # result = question_title + question_text
-        payload = {'q': question_title}
-        url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
-        # results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
-        answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
-        results = json.loads(
-            '{"answers": [['
-            '{"score": 0.5, "answer": "答案1", "text": "文本1文本1文本1文本1文本1文本1文本1文本1", "id": "https://zh.wikipedia.org/wiki?curid=1@测试1"},'
-            '{"score": 0.4, "answer": "答案2", "text": "文本2文本2文本2文本2文本2文本2文本2文本2", "id": "course/subdir/测试2.pptx"}'
-            ']]}', encoding="utf-8")
-        for result in results['answers'][0]:
-            if 'wiki' in result['id']:
-                url_word = result['id'].split('@')
-                url = url_word[0]
-                word = url_word[-1] if len(url_word) > 1 else "词条"
-                answer_content += '[维基百科（%s）](%s "维基百科")中的相关内容：\n\n' % (word, url)
-                answer_content += '> %s\n\n' % result['text']
-            else:
-                filename = os.path.basename(result['id'])
-                answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
-                answer_content += '> %s\n\n' % result['text']
-        if results:
-            answer.answer_text = answer_content
-            answer.save()
-
-
-# ------------------------------------------------------------------------------
-# 自动回答线程 End
-# ------------------------------------------------------------------------------
 
 class CreateQuestionView(LoginRequired, CreateView):
     """
