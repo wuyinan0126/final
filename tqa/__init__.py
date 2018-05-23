@@ -68,7 +68,7 @@ DEFAULTS = {
     'kernel_feature_sizes': '[100, 100, 100, 100]',
     'num_layers_c': 2,
     'use_reattention': True,
-    'reattention_round': 0,
+    'reattention_round': 2,
     'gamma_e': 0.5,
     'gamma_b': 0.5,
     # 特征选择相关

@@ -326,28 +326,28 @@ class ReattentionLayer(nn.Module):
         super(ReattentionLayer, self).__init__()
         self.linear = nn.Linear(hidden_size, hidden_size)
 
-    def forward(self, q_hiddens, d_hiddens, q_mask, d_mask, e_alpha, b_alpha, e_gamma, b_gamma):
+    def forward(self, q_embedding, d_embedding, q_mask, d_mask, e_alpha, b_alpha, e_gamma, b_gamma):
         """
-        :param q_hiddens:   batch * max_question_length * (hidden_size * 2 * num_layers)
-        :param d_hiddens:   batch * max_document_length * (hidden_size * 2 * num_layers)
+        :param q_embedding: batch * max_question_length * embedding_size
+        :param d_embedding: batch * max_document_length * embedding_size
         :param q_mask:      batch * max_question_length (1 for padding, 0 for true)
         :param d_mask:      batch * max_document_length (1 for padding, 0 for true)
         :param e_alpha:     batch * max_document_length * max_question_length
         :param b_alpha:     batch * max_document_length * max_document_length
         :return alpha       batch * max_document_length
         """
-        max_document_length = d_hiddens.size(1)
-        max_question_length = q_hiddens.size(1)
+        max_document_length = d_embedding.size(1)
+        max_question_length = q_embedding.size(1)
 
         # E_tt: batch * max_document_length * max_question_length
         E_tt = (F.softmax(e_alpha.transpose(1, 2), dim=2)
                 .bmm(F.softmax(b_alpha.transpose(1, 2), dim=1))).transpose(1, 2)
 
-        # d_projection: batch * max_document_length * (hidden_size * 2 * num_layers)
-        d_projection = self.linear(d_hiddens.view(-1, d_hiddens.size(2))).view(d_hiddens.size())
+        # d_projection: batch * max_document_length * embedding_size
+        d_projection = self.linear(d_embedding.view(-1, d_embedding.size(2))).view(d_embedding.size())
         d_projection = F.relu(d_projection)
-        # q_projection: batch * max_question_length * (hidden_size * 2 * num_layers)
-        q_projection = self.linear(q_hiddens.view(-1, q_hiddens.size(2))).view(q_hiddens.size())
+        # q_projection: batch * max_question_length * embedding_size
+        q_projection = self.linear(q_embedding.view(-1, q_embedding.size(2))).view(q_embedding.size())
         q_projection = F.relu(q_projection)
 
         # scores: batch * max_document_length * max_question_length
@@ -363,15 +363,15 @@ class ReattentionLayer(nn.Module):
         # E_t: batch * max_document_length * max_question_length
         E_t = E_f + e_gamma * E_tt
 
-        # H_t: [batch * max_document_length * max_question_length].bmm[batch * max_question_length * (hidden_size * 2 * num_layers)]
-        # => batch * max_document_length * (hidden_size * 2 * num_layers)
-        H_t = E_f.bmm(q_hiddens)
+        # H_t: [batch * max_document_length * max_question_length].bmm[batch * max_question_length * embedding_size]
+        # => batch * max_document_length * embedding_size
+        H_t = E_f.bmm(q_embedding)
 
         # B_tt: batch * max_document_length * max_document_length
         B_tt = (F.softmax(b_alpha.transpose(1, 2), dim=2)
                 .bmm(F.softmax(b_alpha.transpose(1, 2), dim=1))).transpose(1, 2)
 
-        # H_t_projection: batch * max_document_length * (hidden_size * 2 * num_layers)
+        # H_t_projection: batch * max_document_length * embedding_size
         H_t_projection = self.linear(H_t.view(-1, H_t.size(2))).view(H_t.size())
         H_t_projection = F.relu(H_t_projection)
 
@@ -388,7 +388,7 @@ class ReattentionLayer(nn.Module):
         B_t = (B_f + b_gamma * B_tt) * Variable(
             (-1 * (torch.eye(max_document_length) - 1)).unsqueeze(0).expand(B_tt.size()), requires_grad=False).cuda()
 
-        # align_ht: batch * max_document_length * (hidden_size * 2 * num_layers)
+        # align_ht: batch * max_document_length * embedding_size
         align_ht = B_t.bmm(H_t)
 
         return E_t, B_t, align_ht
