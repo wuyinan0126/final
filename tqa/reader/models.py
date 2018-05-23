@@ -509,7 +509,7 @@ class RnnEncoder(nn.Module):
         # 构建文档的d_rnn_input: [d_embedding, align_feature, f]:
         # d_rnn_input: batch * max_document_length * [embedding_size + embedding_size + feature_fields长度]
         d_rnn_inputs = []
-        q_rnn_inputs = []
+        q_rnn_inputs = [q_w_embedding]
 
         # --------------------------------------------------------------------------
         # 对齐特征（文档）
@@ -552,7 +552,6 @@ class RnnEncoder(nn.Module):
         q_rnn_inputs.append(q_cnn_feature)
 
         # --------------------------------------------------------------------------
-
         # d_hiddens: batch * max_document_length * (hidden_size * 2 * num_layers)
         d_rnn_input = torch.cat(d_rnn_inputs, 2)
         # logger.info('Actual document features size: %d' % d_rnn_input.size(2))
