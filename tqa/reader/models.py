@@ -434,7 +434,8 @@ class RnnEncoder(nn.Module):
             self.reattention = ReattentionLayer(args.embedding_size_w)
 
         # 输入到rnn_document_encoder的向量长度: d_embedding_size + d_embedding_size + extra_features_size + cnn_size
-        document_rnn_input_size = args.embedding_size_w + args.num_extra_features
+        # document_rnn_input_size = args.embedding_size_w + args.num_extra_features
+        document_rnn_input_size = args.num_extra_features
         if args.use_align:
             document_rnn_input_size += args.embedding_size_w
         document_rnn_input_size += cnn_size
