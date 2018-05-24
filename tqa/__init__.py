@@ -56,7 +56,7 @@ DEFAULTS = {
     # 数据预处理相关
     'uncased_question': False,  # 小写化问题
     'uncased_document': False,  # 小写化文档
-    'only_use_corpus': False,
+    'only_use_corpus': True,
     # 模型结构相关
     'rnn_type': 'lstm',
     'embedding_size_w': 300,
@@ -79,7 +79,7 @@ DEFAULTS = {
     'use_lemma': True,
     'use_tf': True,
     # 优化相关
-    'tune_top_k': 10,
+    'tune_top_k': 10000,
     'optimizer': 'adamax',
     'learning_rate': 0.002,
     'momentum': 0,

@@ -53,7 +53,7 @@ class TqaThread(threading.Thread):
             id = row[0]
             title = row[1]
             description = row[2]
-            questions.append(id + "#" + title + " " + description)
+            questions.append(id + "#" + (title + " " + description).replace('$', '').replace('#', ''))
 
         if IS_DEBUG:
             result = json.loads(

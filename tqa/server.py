@@ -43,7 +43,6 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path)
         query_map = parse_qs(unquote(path.query))
         question = query_map["q"][0] if "q" in query_map else None
-        # id#question_content$id#question_content
         questions = query_map["s"][0] if "s" in query_map else None
 
         content = ''
@@ -53,8 +52,8 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
             if answers:
                 content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
         elif questions:
-            # id_questions = [[id,question_content],]
-            # => {similarities: {"id": "1", "score": 0.5}}
+            # questions: id#question_content$id#question_content
+            # => {"id": "1", "score": 0.5}
             id, score = self.server.core.reuse([q.split('#') for q in questions.split('$')])
             if id and score:
                 content = json.dumps({'id': id, 'score': score}, indent=2, separators=(',', ': '))

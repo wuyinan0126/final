@@ -304,7 +304,6 @@ def train(args):
         epoch_timer = utils.Timer()
 
         for batch_index, examples_in_batch in enumerate(train_loader):
-            #
             train_loss.update(*model.update(examples_in_batch))
 
             if batch_index % args.log_every_num_batches == 0:
@@ -329,6 +328,14 @@ def train(args):
                         (args.validation_metric, result[args.validation_metric], train_states['epoch'], model.updates))
             model.save(model_path)
             train_states['best_validation'] = result[args.validation_metric]
+        # 如果准确率不上升，则调低学习率
+        # else:
+        #     for param_group in model.optimizer.param_groups:
+        #         logger.info('Adjust learning rate from {old_lr} to {new_lr}'.format(
+        #             old_lr=param_group['lr'],
+        #             new_lr=param_group['lr'] * 0.5
+        #         ))
+        #         param_group['lr'] = param_group['lr'] * 0.5
 
 
 if __name__ == '__main__':
