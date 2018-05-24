@@ -63,9 +63,10 @@ class FastTextMatcher():
 
 if __name__ == '__main__':
     matcher = FastTextMatcher()
-    matcher.match([
+    print(matcher.match([
         '梁紫媛 因 职务 便利 掌握 了 公司 业务 模型 分类 方面 的 大量 原始 数据',
         '李莉丝 、 黄悦 二人 先后 接触 梁紫媛，向 其 打听 印度 模型 制作 情况',
         '梁紫媛 明知 李莉丝 、 黄悦 二人 已经 离职 ， 仍 将 公司 重要 产品 数据 外泄',
         '入职 后 主要 负责 topbuzz 业务线 英语 分类 模型 的 数据 标注 和 模型 训练',
-    ])
+    ]))
+

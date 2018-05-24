@@ -79,7 +79,7 @@ DEFAULTS = {
     'use_lemma': True,
     'use_tf': True,
     # 优化相关
-    'tune_top_k': 10000,
+    'tune_top_k': 10,
     'optimizer': 'adamax',
     'learning_rate': 0.002,
     'momentum': 0,
