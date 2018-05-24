@@ -101,7 +101,8 @@ python reader/trainer.py \
     --checkpoint False \
     --train-data-path datasets/webqa/train.txt \
     --dev-data-path datasets/webqa/valid.txt \
-    --embedded-corpus-path models/embeddings/zh.fasttext.wiki.300d.txt
+    --embedded-corpus-path models/embeddings/cc.zh.300.vec
+#    --embedded-corpus-path models/embeddings/zh.fasttext.wiki.300d.txt
 
 # 训练数据集 [从已有模型开始训练]
 python reader/trainer.py \

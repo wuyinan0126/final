@@ -19,7 +19,8 @@ from tqa.retriever import utils as r_utils
 from tqa.retriever.db import Db
 from tqa.retriever.tfidf_ranker import TfidfRanker
 from tqa.retriever.tokenizer import CoreNlpTokenizer
-from tqa.retriever.tokens import Tokens
+from tqa.reuser import fasttext_matcher
+from tqa.reuser.fasttext_matcher import FastTextMatcher
 
 log_format = logging.Formatter('%(asctime)s: [ %(message)s ]', '%Y/%m/%d %H:%M:%S')
 console = logging.StreamHandler()
@@ -42,19 +43,28 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path)
         query_map = parse_qs(unquote(path.query))
         question = query_map["q"][0] if "q" in query_map else None
+        # id#question_content$id#question_content
+        questions = query_map["s"][0] if "s" in query_map else None
 
-        answers = self.server.core.answer(question) if question else None
-        # answers = ['hahah1', 'hahah2']
+        content = ''
 
-        if answers:
-            content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
-            content = content.encode('utf-8').decode('raw-unicode-escape')
+        if question:
+            answers = self.server.core.answer(question)
+            if answers:
+                content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
+        elif questions:
+            # id_questions = [[id,question_content],]
+            # => {similarities: {"id": "1", "score": 0.5}}
+            id, score = self.server.core.reuse([q.split('#') for q in questions.split('$')])
+            if id and score:
+                content = json.dumps({'id': id, 'score': score}, indent=2, separators=(',', ': '))
 
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
-            # self.send_header("Content-Length", str(len(content)))
-            self.end_headers()
-            self.wfile.write(bytes(content, "utf-8"))
+        content = content.encode('utf-8').decode('raw-unicode-escape')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        # self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(bytes(content, "utf-8"))
 
     def do_POST(self):
         self.do_GET()
@@ -118,6 +128,20 @@ class TqaCore():
             initargs=(tokenizer_opts,)
         )
 
+        logger.info('Initializing matcher...')
+        self.matcher = FastTextMatcher()
+
+    def reuse(self, id_questions):
+        ids = []
+        questions = []
+        for iq in id_questions:
+            ids.append(iq[0])
+            questions.append(iq[1])
+
+        q_tokens = self.pool.map_async(tokenize, questions)
+        index, score = self.matcher.match_tokens(q_tokens)
+        return ids[index], score
+
     def answer(self, question):
         start_time = time.time()
         logger.info('Processing question: %s...' % question)
@@ -147,74 +171,6 @@ class TqaCore():
 
         q_tokens = q_tokens.get()
         d_rank_k_tokens = d_rank_k_tokens.get()
-
-        # logger.info("Splitting documents...")
-        # 切割d_rank_k_tokens
-        # d_splits_mark = ['.', '!', '?', ';', '。', '！', '？', '；', ' ']  # 切割标志
-        # d_splits_tokens = []
-        # for i in range(len(d_rank_k_tokens)):
-        #     j = 0
-        #     d_length = len(d_rank_k_tokens[i].words())
-        #     while j < d_length:
-        #         for k in range(j, d_length):
-        #             if d_rank_k_tokens[i].words()[k] in d_splits_mark:
-        #                 data = []
-        #                 for l in range(j, k + 1):
-        #                     data.append((
-        #                         d_rank_k_tokens[i].words()[l],
-        #                         d_rank_k_tokens[i].words_ws()[l],
-        #                         d_rank_k_tokens[i].span()[l],
-        #                         d_rank_k_tokens[i].pos()[l],
-        #                         d_rank_k_tokens[i].lemma()[l],
-        #                         d_rank_k_tokens[i].ner()[l]
-        #                     ))
-        #                 tokens = Tokens(data)
-        #                 d_splits_tokens.append((documents_ids[i], tokens))
-        #                 j = k + 1
-        #                 break
-        #         if k == d_length - 1 and j <= k:
-        #             data = []
-        #             for l in range(j, k + 1):
-        #                 data.append((
-        #                     d_rank_k_tokens[i].words()[l],
-        #                     d_rank_k_tokens[i].words_ws()[l],
-        #                     d_rank_k_tokens[i].span()[l],
-        #                     d_rank_k_tokens[i].pos()[l],
-        #                     d_rank_k_tokens[i].lemma()[l],
-        #                     d_rank_k_tokens[i].ner()[l]
-        #                 ))
-        #             tokens = Tokens(data)
-        #             d_splits_tokens.append((documents_ids[i], tokens))
-        #             j = k + 1
-        #
-        # print(len(d_splits_tokens))
-        # examples = []
-        # for i in range(len(d_splits_tokens)):
-        #     examples.append({
-        #         'id': d_splits_tokens[i][0],
-        #         'qtext': q_tokens[0].words(),
-        #         'qlemma': q_tokens[0].lemma(),
-        #         'dtext': d_splits_tokens[i][1].words(),
-        #         'dlemma': d_splits_tokens[i][1].lemma(),
-        #         'dpos': d_splits_tokens[i][1].pos(),
-        #         'dner': d_splits_tokens[i][1].ner(),
-        #     })
-        #
-        # logger.info("Batchify...")
-        # examples_in_batch = utils.batchify(
-        #     [utils.vectorize(example, self.reader, single_answer=False) for example in examples]
-        # )
-        # start, end, score = self.reader.predict(examples_in_batch, self.top_k_answers)
-        #
-        # # 从start, end生成答案
-        # results = []
-        # for i in range(len(d_splits_tokens)):
-        #     for j in range(len(start[i])):
-        #         answer = d_splits_tokens[i][1].slice(start[i][j], end[i][j] + 1).untokenize()
-        #         text = d_splits_tokens[i][1].slice(0).untokenize()
-        #         results.append(
-        #             {'score': score[i][j].item(), 'answer': answer, 'text': text, 'id': d_splits_tokens[i][0]}
-        #         )
 
         examples = []
         for i in range(len(d_rank_k_tokens)):

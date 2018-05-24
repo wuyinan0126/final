@@ -38,7 +38,7 @@ class TqaThread(threading.Thread):
         self.question = question
         self.user = User.objects.get(pk=1)
 
-    def measure(self, question):
+    def reuse(self, question):
         conn = Sqlite().get_conn()
         cursor = conn.cursor()
 
@@ -48,30 +48,53 @@ class TqaThread(threading.Thread):
         cursor.execute(sql)
         rows = cursor.fetchall()
 
+        questions = [question]
         for row in rows:
-            print(row)
+            id = row[0]
+            title = row[1]
+            description = row[2]
+            questions.append(id + "#" + title + " " + description)
+
+        if IS_DEBUG:
+            result = json.loads(
+                '{"id": "1", "score": 0.5},', encoding="utf-8"
+            )
+        else:
+            payload = {'s': '$'.join(questions)}
+            url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
+            result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+
+        most_similar_id = result['id']
+        most_similar_score = float(result['score'])
+
+        reused = ''
+        if most_similar_id and most_similar_score > 0.5:
+            sql = '''
+                SELECT answer_text, MAX(positive_votes) FROM main.qa_answer
+                WHERE question_id={id} AND (positive_votes - negative_votes > 0)
+            '''.format(
+                id=most_similar_id
+            )
+
+            cursor.execute(sql)
+            row = cursor.fetchone()
+            if row:
+                reused = row[0][0]
 
         conn.close()
+        return reused
 
-    def run(self):
-        answer = Answer()
-        answer.question = self.question
-        answer.user = self.user
-        question_title = self.question.title
-        question_text = self.question.description
-        question_content = question_title  # question_title + question_text
-
-        # self.measure(question_content)
-
+    def answer(self, question, answer):
         answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
         if IS_DEBUG:
             results = json.loads(
                 '{"answers": [['
                 '{"score": 0.5, "answer": "答案1", "text": "文本1文本1文本1文本1文本1文本1文本1文本1", "id": "https://zh.wikipedia.org/wiki?curid=1@测试1"},'
                 '{"score": 0.4, "answer": "答案2", "text": "文本2文本2文本2文本2文本2文本2文本2文本2", "id": "course/subdir/测试2.pptx"}'
-                ']]}', encoding="utf-8")
+                ']]}', encoding="utf-8"
+            )
         else:
-            payload = {'q': question_content}
+            payload = {'q': question}
             url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
@@ -89,6 +112,18 @@ class TqaThread(threading.Thread):
         if results:
             answer.answer_text = answer_content
             answer.save()
+
+    def run(self):
+        answer = Answer()
+        answer.question = self.question
+        answer.user = self.user
+        question_title = self.question.title
+        question_text = self.question.description
+        question_content = question_title  # question_title + question_text
+
+        reused = self.reuse(question_content)
+        if not reused:
+            self.answer(question_content, answer)
 
 # ------------------------------------------------------------------------------
 # 自动回答线程 End
