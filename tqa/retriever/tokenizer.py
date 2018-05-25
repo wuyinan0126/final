@@ -3,9 +3,10 @@ import copy
 import json
 import logging
 
+import os
 import pexpect
 
-from tqa import DEFAULTS
+from tqa import DEFAULTS, DATA_DIR
 from tqa.retriever.tokens import Tokens
 from tqa.retriever.utils import special_char
 
@@ -22,7 +23,7 @@ class CoreNlpTokenizer():
         """
         self.language = kwargs.get('language', DEFAULTS['tokenizer_language'])
         self.annotators = copy.deepcopy(kwargs.get('annotators', DEFAULTS['tokenizer_annotators']))
-        self.classpath = kwargs.get('classpath', DEFAULTS['tokenizer_classpath'])
+        self.classpath = os.path.join(DATA_DIR, kwargs.get('classpath', DEFAULTS['tokenizer_classpath']))
         self.heap = kwargs.get('heap', DEFAULTS['tokenizer_heap'])
 
         # annotators: tokenize(分词), ssplit(断句), pos(词性标注), lemma(词元化), ner(命名实体识别)

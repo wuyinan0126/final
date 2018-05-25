@@ -22,7 +22,7 @@ DEFAULTS = {
     # ------------------------------------------------------------------------------
     'tokenizer_language': 'zh',
     'tokenizer_annotators': ['pos', 'ner', 'lemma'],
-    'tokenizer_classpath': os.path.join(DATA_DIR, 'corenlp/*'),
+    'tokenizer_classpath': 'corenlp/*',
     'tokenizer_heap': '5g',
     # ------------------------------------------------------------------------------
     # tfidf_builder/tfidf_ranker 相关参数
@@ -113,5 +113,5 @@ DEFAULTS = {
     # ------------------------------------------------------------------------------
     # reuser 相关参数
     # ------------------------------------------------------------------------------
-    'embedded_corpus_bin_path': os.path.join(DATA_DIR, 'models/embeddings/cc.zh.300.bin'),
+    'embedded_corpus_bin_path': 'models/embeddings/cc.zh.300.bin',
 }

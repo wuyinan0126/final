@@ -15,7 +15,7 @@ STOPWORDS_ZH = {
 
 class FastTextMatcher():
     def __init__(self, bin_path):
-        fasttext_model_path = bin_path
+        fasttext_model_path = os.path.join(DATA_DIR, bin_path)
         self.fasttext = load_model(fasttext_model_path)
 
     def __word_filter(self, word):
