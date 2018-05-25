@@ -178,7 +178,7 @@ def prepare_args(parser):
 def train(args):
     # 如果是中断后继续训练，则需指定model_name: ${language}_${rnn_type}_${hidden_size}_${tune_top_k}_YYmmddHHMMSS
     if not args.model_name:
-        args.model_name = ("%s_%s" % (args.language, time.strftime("%Y%m%d_%H%M%S")))
+        args.model_name = ("reader_%s" % time.strftime("%Y%m%d_%H%M%S"))
     # ------------------------------------------------------------------------------
     # 日志记录相关
     # ------------------------------------------------------------------------------
