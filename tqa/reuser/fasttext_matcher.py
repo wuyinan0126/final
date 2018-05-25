@@ -86,6 +86,7 @@ class FastTextMatcher():
         source = cut_text(source)
         target = cut_text(target)
         baidu_similar = self.client.simnet(source, target, {"model": "CNN"})
+        logger.info("Similar: " + str(baidu_similar))
         return baidu_similar['score']
 
 
