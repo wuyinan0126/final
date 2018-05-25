@@ -25,7 +25,7 @@ class FastTextMatcher():
         if word.lower() in STOPWORDS_ZH: return True
         return False
 
-    def __grams_filter(self, grams):
+    def __grams_filter(self, grams, mode='any'):
         """ 判断是否保留该grams
         :param grams: 由最大长度为n个words组成的list
         """
