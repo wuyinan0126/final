@@ -144,7 +144,7 @@ class TqaCore():
 
         q_tokens = self.pool.map_async(tokenize, questions)
         q_tokens = q_tokens.get()
-        index, score = self.matcher.match_tokens(q_tokens)
+        index, score = self.matcher.match(q_tokens)
         return ids[index], score
 
     def answer(self, question):

@@ -55,10 +55,10 @@ class FastTextMatcher():
             similarity = self.__similarity(source, target)
             similarities.append((similarity, i))
 
-        similarities = sorted(similarities)
+        similarities = sorted(similarities, reverse=True)
         return similarities[:k]
 
-    def match_tokens(self, tokens_list):
+    def match(self, tokens_list):
         ngrams = []
         for tokens in tokens_list:
             # 获得去除了停用词、标点的grams list，每个gram用空格连接，如2gram: ['a','ab','b','bc']
@@ -67,17 +67,26 @@ class FastTextMatcher():
             logger.info('Question ngram: ' + ngram)
             ngrams.append(ngram)
 
+        # scores: [(score, index),]
+        scores = []
         source = ''.join(tokens_list[0].words_ws())
+        # top_k_similar: [(similarity, index),]
         top_k_similar = self.get_top_k_similar(ngrams)
         for s in top_k_similar:
             target = ''.join(tokens_list[s[1]].words_ws())
-            baidu_similar = self.get_baidu_similar(source, target)
+            scores.append((self.get_baidu_score(source, target), s[1]))
 
-    def get_baidu_similar(self, source, target):
+        scores = sorted(scores, reverse=True)
+        return scores[0][1]
+
+    def get_baidu_score(self, source, target):
+        def cut_text(text):
+            return text if len(text) < 200 else text[:100] + text[-100:]
+
+        source = cut_text(source)
+        target = cut_text(target)
         baidu_similar = self.client.simnet(source, target, {"model": "CNN"})
-        print(baidu_similar)
-        # baidu_similar = json.load(baidu_similar)
-
+        return baidu_similar['score']
 
 
 if __name__ == '__main__':
@@ -89,7 +98,7 @@ if __name__ == '__main__':
     #     '梁紫媛 明知 李莉丝 、 黄悦 二人 已经 离职 ， 仍 将 公司 重要 产品 数据 外泄',
     #     '入职 后 主要 负责 topbuzz 业务线 英语 分类 模型 的 数据 标注 和 模型 训练',
     # ]))
-    matcher.get_baidu_similar(
+    matcher.get_baidu_score(
         '梁紫媛因职务便利掌握了公司业务模型分类方面的大量原始数据',
         '入职后主要负责topbuzz业务线英语分类模型的数据标注和模型训练'
     )

@@ -21,3 +21,5 @@ pexpect
 ##### install fasttext
 # git clone https://github.com/facebookresearch/fastText.git
 # cd fastText && pip install .
+
+baidu-aip
