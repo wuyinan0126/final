@@ -53,7 +53,7 @@ class FastTextMatcher():
         # top_k_related: [(related_score, index),]
         top_k_related = self.get_top_k_related(ngrams)
         # top_k_similar: [(similar_score, index),]
-        top_k_score = []
+        top_k_similar = []
 
         for related in top_k_related:
             related, index = related
@@ -62,15 +62,12 @@ class FastTextMatcher():
             logger.info("Question related/similar score: %f/%f %s" % (
                 related, similar, ''.join(tokens_list[index].words_ws())
             ))
-            top_k_score.append((similar * related, index))
+            top_k_similar.append((similar, index))
 
-        logger.info("-" * 20)
+        top_k_similar = sorted(top_k_similar, reverse=True)
+        logger.info("Most similar: %f %s" % (top_k_similar[0][0], ''.join(tokens_list[top_k_similar[0][1]].words_ws())))
 
-        top_k_score = sorted(top_k_score, reverse=True)
-        for score in top_k_score:
-            logger.info("Question match score: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
-
-        return top_k_score[0][0], top_k_score[0][1]
+        return top_k_similar[0][0], top_k_similar[0][1]
 
     def get_baidu_similar(self, source, target):
         def cut_text(text):
