@@ -52,8 +52,7 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
             if answers:
                 content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
         elif questions:
-            # questions: id#question_content$id#question_content
-            # => {"id": "1", "score": 0.5}
+            # questions: id#question_content$id#question_content => {"id": "1", "score": 0.5}
             id, score = self.server.core.reuse([q.split('#') for q in questions.split('$')])
             if id and score:
                 content = json.dumps({'id': id, 'score': score}, indent=2, separators=(',', ': '))
@@ -88,7 +87,7 @@ def tokenize(question):
 
 
 class TqaCore():
-    def __init__(self, ranker_opts, reader_opts, num_workers=None):
+    def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None):
         logger.info('Initializing document rankers...')
         tfidf_model_paths = ranker_opts.get('tfidf_model_paths')
         self.tfidf_rank_k = ranker_opts.get('tfidf_rank_k', DEFAULTS['tfidf_rank_k'])
@@ -128,7 +127,8 @@ class TqaCore():
         )
 
         logger.info('Initializing matcher...')
-        self.matcher = FastTextMatcher()
+        bin_path = reuser_opts.get('embedded_corpus_bin_path')
+        self.matcher = FastTextMatcher(bin_path)
 
     def reuse(self, id_questions):
         ids = []
@@ -209,6 +209,7 @@ if __name__ == '__main__':
     parser.add_argument('--tfidf-rank-k', type=int, default=DEFAULTS['tfidf_rank_k'])
     parser.add_argument('--reader-model-path', type=str, default=None)
     parser.add_argument('--embedded-corpus-path', type=str, default=None)
+    parser.add_argument('--embedded-corpus-bin-path', type=str, default=None)
     parser.add_argument('--use-cuda', type='bool', default=DEFAULTS['use_cuda'])
     parser.add_argument('--num-workers', type=int, default=DEFAULTS['num_workers'])
     parser.add_argument('--top-k-answers', type=int, default=DEFAULTS['top_k_answers'])
@@ -228,6 +229,9 @@ if __name__ == '__main__':
             'embedded_corpus_path': args.embedded_corpus_path,
             'use_cuda': args.use_cuda,
             'top_k_answers': args.top_k_answers
+        },
+        reuser_opts={
+            'embedded_corpus_bin_path': args.embedded_corpus_path,
         },
         num_workers=args.num_workers,
     )

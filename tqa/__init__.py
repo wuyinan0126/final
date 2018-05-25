@@ -25,7 +25,7 @@ DEFAULTS = {
     'tokenizer_classpath': os.path.join(DATA_DIR, 'corenlp/*'),
     'tokenizer_heap': '5g',
     # ------------------------------------------------------------------------------
-    # tfidf_builder & tfidf_ranker 相关参数
+    # tfidf_builder/tfidf_ranker 相关参数
     # ------------------------------------------------------------------------------
     'tfidf_model_dir': 'models/retriever/',
     'tfidf_ngram': 2,
@@ -110,4 +110,8 @@ DEFAULTS = {
     'num_layers_t': 3,
     'num_classes': 7,
     'bidirectional': True,
+    # ------------------------------------------------------------------------------
+    # reuser 相关参数
+    # ------------------------------------------------------------------------------
+    'embedded_corpus_bin_path': os.path.join(DATA_DIR, 'models/embeddings/cc.zh.300.bin'),
 }
