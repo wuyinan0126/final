@@ -35,7 +35,7 @@ class FastTextMatcher():
     def __similarity(self, v1, v2):
         n1 = numpy.linalg.norm(v1)
         n2 = numpy.linalg.norm(v2)
-        return numpy.dot(v1, v2) / n1 / n2
+        return (numpy.dot(v1, v2) / n1 / n2).item()
 
     def match(self, text_list):
         vectors = []

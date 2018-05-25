@@ -90,7 +90,7 @@ class TqaCore():
     def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None):
         start = time.time()
 
-        logger.info('Initializing matcher...')
+        logger.info('Initializing reuser...')
         bin_path = reuser_opts.get('embedded_corpus_bin_path')
         self.matcher = FastTextMatcher(bin_path)
 
