@@ -1,15 +1,13 @@
-import json
 import logging
-import unicodedata
 
 import os
-import regex
 import numpy
 
 from fastText import load_model
 from aip import AipNlp
 
 from tqa import DATA_DIR, DEFAULTS
+from tqa.retriever.utils import grams_filter
 
 logger = logging.getLogger(__name__)
 
@@ -17,30 +15,12 @@ APP_ID = '11296977'
 API_KEY = 'wUQGnSdwkjTDU3YxhlD0VMC1'
 SECRET_KEY = 'PomMd9fNOsFHGV6zcfSe4Hev1CTiiSxk'
 
-STOPWORDS_ZH = {
-
-}
-
 
 class FastTextMatcher():
     def __init__(self, bin_path):
         fasttext_model_path = os.path.join(DATA_DIR, bin_path)
         self.fasttext = load_model(fasttext_model_path)
         self.client = AipNlp(APP_ID, API_KEY, SECRET_KEY)
-
-    def __word_filter(self, word):
-        """ 去除停用词、标点和复数结尾 """
-        word = unicodedata.normalize('NFD', word)
-        if regex.match(r'^\p{P}+$', word): return True
-        if word.lower() in STOPWORDS_ZH: return True
-        return False
-
-    def __grams_filter(self, grams, mode='any'):
-        """ 判断是否保留该grams
-        :param grams: 由最大长度为n个words组成的list
-        """
-        filtered = [self.__word_filter(word) for word in grams]
-        return any(filtered)
 
     def __similarity(self, v1, v2):
         n1 = numpy.linalg.norm(v1)
@@ -56,13 +36,14 @@ class FastTextMatcher():
             similarities.append((similarity, i))
 
         similarities = sorted(similarities, reverse=True)
+
         return similarities[:k]
 
     def match(self, tokens_list):
         ngrams = []
         for tokens in tokens_list:
             # 获得去除了停用词、标点的grams list，每个gram用空格连接，如2gram: ['a','ab','b','bc']
-            ngram = tokens.ngrams(n=2, uncased=False, filter_fn=self.__grams_filter, as_strings=True)
+            ngram = tokens.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
             ngram = ' '.join(ngram)
             logger.info('Question ngram: ' + ngram)
             ngrams.append(ngram)
@@ -70,6 +51,7 @@ class FastTextMatcher():
         # scores: [(score, index),]
         scores = []
         source = ''.join(tokens_list[0].words_ws())
+        logger.info("Source question: " + source)
         # top_k_similar: [(similarity, index),]
         top_k_similar = self.get_top_k_similar(ngrams)
         for s in top_k_similar:
@@ -77,6 +59,9 @@ class FastTextMatcher():
             scores.append((self.get_baidu_score(source, target), s[1]))
 
         scores = sorted(scores, reverse=True)
+        for score in scores:
+            logger.info("Target question: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
+
         return scores[0][0], scores[0][1]
 
     def get_baidu_score(self, source, target):
@@ -86,7 +71,6 @@ class FastTextMatcher():
         source = cut_text(source)
         target = cut_text(target)
         baidu_similar = self.client.simnet(source, target, {"model": "CNN"})
-        logger.info("Similar: " + str(baidu_similar))
         return baidu_similar['score']
 
 
