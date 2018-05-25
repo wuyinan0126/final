@@ -79,7 +79,7 @@ DEFAULTS = {
     'use_lemma': True,
     'use_tf': True,
     # 优化相关
-    'tune_top_k': 20000,
+    'tune_top_k': 10000,
     'optimizer': 'adamax',
     'learning_rate': 0.002,
     'momentum': 0,
@@ -101,15 +101,7 @@ DEFAULTS = {
     # ------------------------------------------------------------------------------
     # classifier/trainer 相关参数
     # ------------------------------------------------------------------------------
-    'classifier_model_dir': os.path.join(DATA_DIR, 'models/classifier/'),  # 存放日志和模型文件目录
-    'classifier_train_data_path': os.path.join(DATA_DIR, 'datasets/squad/train-v1.1.txt'),  # parsed SQuAD train 数据集
-    'classifier_dev_data_path': os.path.join(DATA_DIR, 'datasets/squad/dev-v1.1.txt'),  # parsed SQuAD dev 数据集
-    'uncased_text': False,
-    'classifier_validation_metric': 'exact_match',
-    'embedding_size_t': 300,
-    'num_layers_t': 3,
-    'num_classes': 7,
-    'bidirectional': True,
+
     # ------------------------------------------------------------------------------
     # reuser 相关参数
     # ------------------------------------------------------------------------------

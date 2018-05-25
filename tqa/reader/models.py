@@ -30,7 +30,7 @@ class ReaderModel(object):
     # 初始化相关
     # --------------------------------------------------------------------------
 
-    def __init__(self, args, words, chars, extra_feature_fields, states=None, model_type='reader'):
+    def __init__(self, args, words, chars, extra_feature_fields, states=None):
         """
         :param words: word-index词典，用于根据word获得embedding向量embedding[dictionary[word]]
         :param extra_feature_fields: 特征名称词典，用于后面构建特征向量时确定向量长度
@@ -48,8 +48,7 @@ class ReaderModel(object):
         self.gpu_parallel = False
         self.criterion = nn.CrossEntropyLoss()
 
-        from tqa.classifier.models import RnnClassifier
-        self.network = RnnEncoder(args) if model_type == 'reader' else RnnClassifier(args)
+        self.network = RnnEncoder(args)
 
         # 从训练好的模型加载网络状态
         if states:

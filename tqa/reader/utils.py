@@ -8,7 +8,6 @@ import numpy
 import time
 import torch
 
-from tqa.classifier.models import ClassifierModel
 from tqa.reader.models import ReaderModel
 from tqa.reader.data import Dictionary
 
@@ -144,7 +143,7 @@ def get_embedded_words(embedding_file):
 # 模型相关
 # ------------------------------------------------------------------------------
 
-def load_checkpoint(model_path, model_type='reader'):
+def load_checkpoint(model_path):
     logger.info('Loading model %s' % model_path)
     # 在cpu上加载预先训练好的gpu模型，把所有的张量加载到cpu中
     saved_params = torch.load(model_path, map_location=lambda storage, loc: storage)
@@ -159,14 +158,13 @@ def load_checkpoint(model_path, model_type='reader'):
     epoch = saved_params['epoch']
     optimizer = saved_params['optimizer']
 
-    model = ReaderModel(args, words, chars, extra_feature_fields, states) if model_type == 'reader' \
-        else ClassifierModel(args, words, chars, extra_feature_fields, states)
+    model = ReaderModel(args, words, chars, extra_feature_fields, states)
     model.init_optimizer()
 
     return model, epoch
 
 
-def load_model(model_path, new_args=None, model_type='reader'):
+def load_model(model_path, new_args=None):
     global MODEL_OPTIMIZER
 
     logger.info('Loading model %s' % model_path)
@@ -191,23 +189,15 @@ def load_model(model_path, new_args=None, model_type='reader'):
                     logger.info('Keeping saved %s: %s' % (k, old_args[k]))
         args = argparse.Namespace(**old_args)
 
-    return ReaderModel(args, words, chars, extra_feature_fields, states) if model_type == 'reader' \
-        else ClassifierModel(args, words, chars, extra_feature_fields, states)
+    return ReaderModel(args, words, chars, extra_feature_fields, states)
 
 
-def init_model_from_scratch(args, train_examples, dev_examples, model_type='reader'):
+def init_model_from_scratch(args, train_examples, dev_examples):
     """ 建立模型：建立训练集特征名称索引、建立Dictionary对象、初始化模型、加载embeddings """
 
     logger.info('-' * 100)
     logger.info('Generate features field indices')
-    # 建立训练集特征名称索引
-    if model_type == 'reader':
-        extra_feature_fields = build_extra_feature_fields(args, train_examples)
-    elif model_type == 'classifier':
-        from tqa.classifier import utils as c_utils
-        extra_feature_fields = c_utils.build_extra_feature_fields(args, train_examples)
-    else:
-        raise RuntimeError('Unsupported Model Type: %s' % model_type)
+    extra_feature_fields = build_extra_feature_fields(args, train_examples)
 
     logger.info('Num extra features = %d' % len(extra_feature_fields))
     logger.info(extra_feature_fields)
@@ -215,19 +205,12 @@ def init_model_from_scratch(args, train_examples, dev_examples, model_type='read
     # 获得问题和文档中的单词和字符集合，封装在Dictionary对象中
     logger.info('-' * 100)
     logger.info('Build words & chars dictionary')
-    if model_type == 'reader':
-        words, chars = build_dictionary(args, train_examples + dev_examples)
-    elif model_type == 'classifier':
-        from tqa.classifier import utils as c_utils
-        words, chars = c_utils.build_dictionary(args, train_examples + dev_examples)
-    else:
-        raise RuntimeError('Unsupported Model Type: %s' % model_type)
+    words, chars = build_dictionary(args, train_examples + dev_examples)
 
     logger.info('Num distinct words = %d' % len(words))
     logger.info('Num distinct chars = %d' % len(chars))
 
-    model = ReaderModel(args, words, chars, extra_feature_fields) if model_type == 'reader' else \
-        ClassifierModel(args, words, chars, extra_feature_fields)
+    model = ReaderModel(args, words, chars, extra_feature_fields)
 
     # 使用glove对dictionary中的单词进行embedding
     if args.embedded_corpus_path:
