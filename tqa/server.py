@@ -104,7 +104,7 @@ class TqaCore():
 
         logger.info('Initializing document reader...')
         model_path = reader_opts.get('reader_model_path')
-        self.reader = load_model(model_path, new_args=None, model_type='reader')
+        self.reader = load_model(model_path, new_args=None)
         embedded_corpus_path = reader_opts.get('embedded_corpus_path', None)
         if embedded_corpus_path:
             logger.info('Expanding dictionary...')
