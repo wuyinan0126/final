@@ -9,7 +9,7 @@ import os
 
 from torch.utils.data import DataLoader
 
-from tqa import DEFAULTS, DATA_DIR
+from tqa import DEFAULTS, DATA_DIR, LOGS_DIR
 from tqa.reader import utils
 from tqa.reader.data import ReaderDataset, ReaderSampler
 
@@ -182,7 +182,7 @@ def train(args):
     # ------------------------------------------------------------------------------
     # 日志记录相关
     # ------------------------------------------------------------------------------
-    log_file_path = os.path.join(args.model_dir, args.model_name + '.log')
+    log_file_path = os.path.join(LOGS_DIR, args.model_name + '.log')
 
     set_logger(log_file_path, args.checkpoint)
     # ------------------------------------------------------------------------------
@@ -328,14 +328,14 @@ def train(args):
                         (args.validation_metric, result[args.validation_metric], train_states['epoch'], model.updates))
             model.save(model_path)
             train_states['best_validation'] = result[args.validation_metric]
-        # 如果准确率不上升，则调低学习率
-        # else:
-        #     for param_group in model.optimizer.param_groups:
-        #         logger.info('Adjust learning rate from {old_lr} to {new_lr}'.format(
-        #             old_lr=param_group['lr'],
-        #             new_lr=param_group['lr'] * 0.5
-        #         ))
-        #         param_group['lr'] = param_group['lr'] * 0.5
+            # 如果准确率不上升，则调低学习率
+            # else:
+            #     for param_group in model.optimizer.param_groups:
+            #         logger.info('Adjust learning rate from {old_lr} to {new_lr}'.format(
+            #             old_lr=param_group['lr'],
+            #             new_lr=param_group['lr'] * 0.5
+            #         ))
+            #         param_group['lr'] = param_group['lr'] * 0.5
 
 
 if __name__ == '__main__':

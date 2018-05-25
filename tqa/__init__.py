@@ -7,6 +7,7 @@ PROJECT_DIR = "/home/wuyinan/Desktop/final/"
 
 TQA_DIR = os.path.join(PROJECT_DIR, "tqa/")
 DATA_DIR = os.path.join(PROJECT_DIR, "data/")
+LOGS_DIR = os.path.join(DATA_DIR, "logs/")
 
 DEFAULTS = {
     'num_workers': 1,
@@ -106,4 +107,8 @@ DEFAULTS = {
     # reuser 相关参数
     # ------------------------------------------------------------------------------
     'embedded_corpus_bin_path': 'models/embeddings/cc.zh.300.bin',
+    # ------------------------------------------------------------------------------
+    # server 相关参数
+    # ------------------------------------------------------------------------------
+    'server_log_path': 'models/'
 }

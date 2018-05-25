@@ -12,22 +12,28 @@ import os
 import time
 import torch
 
-from tqa import DEFAULTS, DATA_DIR
+from tqa import DEFAULTS, DATA_DIR, LOGS_DIR
 from tqa.reader import utils
 from tqa.reader.utils import load_model, get_embedded_words, str2bool, str2str_list
 from tqa.retriever import utils as r_utils
 from tqa.retriever.db import Db
 from tqa.retriever.tfidf_ranker import TfidfRanker
 from tqa.retriever.tokenizer import CoreNlpTokenizer
-from tqa.reuser import fasttext_matcher
 from tqa.reuser.fasttext_matcher import FastTextMatcher
 
-log_format = logging.Formatter('%(asctime)s: [ %(message)s ]', '%Y/%m/%d %H:%M:%S')
-console = logging.StreamHandler()
-console.setFormatter(log_format)
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(console)
+
+
+def set_logger(log_file_path):
+    logger.setLevel(logging.INFO)
+    log_format = logging.Formatter('%(asctime)s: [ %(message)s ]', '%Y/%m/%d %H:%M:%S')
+    console = logging.StreamHandler()
+    console.setFormatter(log_format)
+    logger.addHandler(console)
+    if log_file_path:
+        file = logging.FileHandler(log_file_path, 'w')
+        file.setFormatter(log_format)
+        logger.addHandler(file)
 
 
 class TqaHttpServer:
@@ -86,7 +92,7 @@ def tokenize(question):
     return TOKENIZER.tokenize(question)
 
 
-class TqaCore():
+class TqaCore(object):
     def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None):
         start = time.time()
 
@@ -226,6 +232,8 @@ if __name__ == '__main__':
     args.reader_model_path = os.path.join(DATA_DIR, args.reader_model_path)
     args.embedded_corpus_path = os.path.join(DATA_DIR, args.embedded_corpus_path) if args.embedded_corpus_path else None
     args.tfidf_model_paths = [os.path.join(DATA_DIR, tfidf_model_path) for tfidf_model_path in args.tfidf_model_paths]
+
+    set_logger(os.path.join(LOGS_DIR, ("server_%s.log" % time.strftime("%Y%m%d_%H%M%S"))))
 
     core = TqaCore(
         ranker_opts={
