@@ -171,11 +171,11 @@ python classifier/trainer.py \
 # server 相关
 # ------------------------------------------------------------------------------
 python server.py \
-    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz, models/retriever/course_tfidf_2gram_16777216hash.npz]' \
+    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz]' \
     --tfidf-rank-k 2 \
     --top-k-answers 1 \
     --reader-model-path models/reader/zh_20180524_195656.mdl \
     --use-cuda False \
     --num-workers 12 \
-    --embedded-corpus-path models/embeddings/cc.zh.300.vec
+    --embedded-corpus-path models/embeddings/cc.zh.300.vec \
     --embedded-corpus-bin-path models/embeddings/cc.zh.300.bin
