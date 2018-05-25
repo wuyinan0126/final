@@ -133,7 +133,9 @@ class TqaCore():
         )
 
         end = time.time()
-        logger.info('Server start elapse: {min}min {sec}sec'.format(min=(end - start) // 60, sec=(end - start) % 60))
+        logger.info('Server start elapse: {min}min {sec}sec'.format(
+            min=int(end - start) // 60, sec=int(end - start) % 60)
+        )
 
     def reuse(self, id_questions):
         ids = []
@@ -144,7 +146,7 @@ class TqaCore():
 
         q_tokens = self.pool.map_async(tokenize, questions)
         q_tokens = q_tokens.get()
-        index, score = self.matcher.match(q_tokens)
+        score, index = self.matcher.match(q_tokens)
         return ids[index], score
 
     def answer(self, question):

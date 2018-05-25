@@ -153,7 +153,7 @@ class ReaderModel(object):
                         loaded_word_counts[glove_word] = 1
                         embedding[self.words[glove_word]].copy_(glove_vector)
                     else:
-                        logging.warning('WARN: Duplicate embedding found for %s' % glove_word)
+                        # logging.warning('WARN: Duplicate embedding found for %s' % glove_word)
                         loaded_word_counts[glove_word] = loaded_word_counts[glove_word] + 1
                         embedding[self.words[glove_word]].add_(glove_vector)
 

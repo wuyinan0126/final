@@ -77,7 +77,7 @@ class FastTextMatcher():
             scores.append((self.get_baidu_score(source, target), s[1]))
 
         scores = sorted(scores, reverse=True)
-        return scores[0][1]
+        return scores[0][0], scores[0][1]
 
     def get_baidu_score(self, source, target):
         def cut_text(text):
