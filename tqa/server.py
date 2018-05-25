@@ -89,6 +89,11 @@ def tokenize(question):
 class TqaCore():
     def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None):
         start = time.time()
+
+        logger.info('Initializing matcher...')
+        bin_path = reuser_opts.get('embedded_corpus_bin_path')
+        self.matcher = FastTextMatcher(bin_path)
+        
         logger.info('Initializing document rankers...')
         tfidf_model_paths = ranker_opts.get('tfidf_model_paths')
         self.tfidf_rank_k = ranker_opts.get('tfidf_rank_k', DEFAULTS['tfidf_rank_k'])
@@ -127,9 +132,6 @@ class TqaCore():
             initargs=(tokenizer_opts,)
         )
 
-        logger.info('Initializing matcher...')
-        bin_path = reuser_opts.get('embedded_corpus_bin_path')
-        self.matcher = FastTextMatcher(bin_path)
         end = time.time()
         logger.info('Server start elapse: {min}min {sec}sec'.format(min=(end - start) // 60, sec=(end - start) % 60))
 

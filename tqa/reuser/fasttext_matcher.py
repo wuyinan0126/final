@@ -62,6 +62,7 @@ class FastTextMatcher():
 
 
 if __name__ == '__main__':
+    # python tqa/reuser/fasttext_matcher.py
     matcher = FastTextMatcher(DEFAULTS['embedded_corpus_bin_path'])
     print(matcher.match([
         '梁紫媛 因 职务 便利 掌握 了 公司 业务 模型 分类 方面 的 大量 原始 数据',
