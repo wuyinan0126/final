@@ -93,7 +93,7 @@ class TqaCore():
         logger.info('Initializing matcher...')
         bin_path = reuser_opts.get('embedded_corpus_bin_path')
         self.matcher = FastTextMatcher(bin_path)
-        
+
         logger.info('Initializing document rankers...')
         tfidf_model_paths = ranker_opts.get('tfidf_model_paths')
         self.tfidf_rank_k = ranker_opts.get('tfidf_rank_k', DEFAULTS['tfidf_rank_k'])
@@ -143,6 +143,7 @@ class TqaCore():
             questions.append(iq[1])
 
         q_tokens = self.pool.map_async(tokenize, questions)
+        q_tokens = q_tokens.get()
         index, score = self.matcher.match_tokens(q_tokens)
         return ids[index], score
 
