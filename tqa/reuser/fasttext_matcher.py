@@ -36,7 +36,6 @@ class FastTextMatcher():
             similarities.append((similarity, i))
 
         similarities = sorted(similarities, reverse=True)
-
         return similarities[:k]
 
     def match(self, tokens_list):
@@ -52,15 +51,19 @@ class FastTextMatcher():
         scores = []
         source = ''.join(tokens_list[0].words_ws())
         logger.info("Source question: " + source)
+        
         # top_k_similar: [(similarity, index),]
         top_k_similar = self.get_top_k_similar(ngrams)
+        for similarity in top_k_similar:
+            logger.info("Related question: %f %s" % (similarity[0], ''.join(tokens_list[similarity[1]].words_ws())))
+
         for s in top_k_similar:
             target = ''.join(tokens_list[s[1]].words_ws())
             scores.append((self.get_baidu_score(source, target), s[1]))
 
         scores = sorted(scores, reverse=True)
         for score in scores:
-            logger.info("Target question: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
+            logger.info("Similar question: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
 
         return scores[0][0], scores[0][1]
 
