@@ -27,7 +27,7 @@ class FastTextMatcher():
         n2 = numpy.linalg.norm(v2)
         return (numpy.dot(v1, v2) / n1 / n2).item()
 
-    def get_top_k_similar(self, text_list, k=5):
+    def get_top_k_related(self, text_list, k=5):
         similarities = []
         source = self.fasttext.get_sentence_vector(text_list[0])
         for i in range(1, len(text_list)):
@@ -47,27 +47,32 @@ class FastTextMatcher():
             logger.info('Question ngram: ' + ngram)
             ngrams.append(ngram)
 
-        # scores: [(score, index),]
-        scores = []
         source = ''.join(tokens_list[0].words_ws())
         logger.info("Source question: " + source)
-        
-        # top_k_similar: [(similarity, index),]
-        top_k_similar = self.get_top_k_similar(ngrams)
-        for similarity in top_k_similar:
-            logger.info("Related question: %f %s" % (similarity[0], ''.join(tokens_list[similarity[1]].words_ws())))
 
-        for s in top_k_similar:
-            target = ''.join(tokens_list[s[1]].words_ws())
-            scores.append((self.get_baidu_score(source, target), s[1]))
+        # top_k_related: [(related_score, index),]
+        top_k_related = self.get_top_k_related(ngrams)
+        # top_k_similar: [(similar_score, index),]
+        top_k_score = []
 
-        scores = sorted(scores, reverse=True)
-        for score in scores:
-            logger.info("Similar question: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
+        for related in top_k_related:
+            related, index = related
+            target = ''.join(tokens_list[index].words_ws())
+            similar = self.get_baidu_similar(source, target)
+            logger.info("Question related/similar score: %f/%f %s" % (
+                related, similar, ''.join(tokens_list[index].words_ws())
+            ))
+            top_k_score.append((similar * related, index))
 
-        return scores[0][0], scores[0][1]
+        logger.info("-" * 20)
 
-    def get_baidu_score(self, source, target):
+        top_k_score = sorted(top_k_score, reverse=True)
+        for score in top_k_score:
+            logger.info("Question match score: %f %s" % (score[0], ''.join(tokens_list[score[1]].words_ws())))
+
+        return top_k_score[0][0], top_k_score[0][1]
+
+    def get_baidu_similar(self, source, target):
         def cut_text(text):
             return text if len(text) < 200 else text[:100] + text[-100:]
 
@@ -86,7 +91,7 @@ if __name__ == '__main__':
     #     '梁紫媛 明知 李莉丝 、 黄悦 二人 已经 离职 ， 仍 将 公司 重要 产品 数据 外泄',
     #     '入职 后 主要 负责 topbuzz 业务线 英语 分类 模型 的 数据 标注 和 模型 训练',
     # ]))
-    matcher.get_baidu_score(
+    matcher.get_baidu_similar(
         '梁紫媛因职务便利掌握了公司业务模型分类方面的大量原始数据',
         '入职后主要负责topbuzz业务线英语分类模型的数据标注和模型训练'
     )
