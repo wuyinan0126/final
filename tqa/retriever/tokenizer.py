@@ -55,7 +55,7 @@ class CoreNlpTokenizer():
                         'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', annotators,
                         '-tokenize.options', options, '-outputFormat', 'json', '-prettyPrint', 'false']
 
-        logger.info(' '.join(self.cmd))
+        # logger.info(' '.join(self.cmd))
 
         # 使用pexpect是使得corenlp子进程keep alive，并获得句柄self.corenlp使得后续还可调用
         self.corenlp = pexpect.spawn('/bin/bash', maxread=100000, timeout=300)
@@ -89,9 +89,9 @@ class CoreNlpTokenizer():
         # 输入text
         try:
             self.corenlp.sendline(text.encode('utf-8'))
-            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=30)
+            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=10)
         except pexpect.exceptions.TIMEOUT as e:
-            logger.info("ERROR: " + (text[0:10] if len(text) > 10 else text) + "...")
+            logger.info("ERROR in Tokenizer: " + (text[0:100] + "..." if len(text) > 100 else text))
             self.corenlp.sendline(' '.join(self.cmd))
             self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=300)
             return None

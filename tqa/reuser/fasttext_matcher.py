@@ -42,10 +42,13 @@ class FastTextMatcher():
         ngrams = []
         for token in tokens:
             # 获得去除了停用词、标点的grams list，每个gram用空格连接，如2gram: ['a','ab','b','bc']
-            ngram = token.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
-            ngram = ' '.join(ngram)
-            logger.info('Question ngram: ' + ngram)
-            ngrams.append(ngram)
+            if token:
+                ngram = token.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
+                ngram = ' '.join(ngram)
+                logger.info('Question ngram: ' + ngram)
+                ngrams.append(ngram)
+            else:
+                ngrams.append('')
 
         source = titles[0] + descriptions[0]
         logger.info("Source question: " + source)

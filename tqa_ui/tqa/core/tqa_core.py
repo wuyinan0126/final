@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import json
+import logging
 import threading
 import urllib
 from urllib.parse import urlencode, quote_plus
@@ -12,7 +14,12 @@ from django.contrib.auth.models import User
 import io
 import sys
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+log_format = logging.Formatter('[%(asctime)s]: [ %(message)s ]', '%Y/%m/%d %H:%M:%S')
+console = logging.StreamHandler()
+console.setFormatter(log_format)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(console)
 
 
 class Sqlite(object):
@@ -29,7 +36,7 @@ class Sqlite(object):
 # 自动回答线程 Begin
 # ------------------------------------------------------------------------------
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 
 class TqaThread(threading.Thread):
@@ -57,7 +64,7 @@ class TqaThread(threading.Thread):
 
         if IS_DEBUG:
             result = json.loads(
-                '{"id": "1", "score": 0.5},', encoding="utf-8"
+                '{"id": 4, "score": 0.6}', encoding="utf-8"
             )
         else:
             payload = {'s': json.dumps(questions)}
@@ -78,14 +85,15 @@ class TqaThread(threading.Thread):
 
             cursor.execute(sql)
             row = cursor.fetchone()
-            if row:
-                reused = row[0][0]
+            if row and row[0].strip():
+                reused = row[0]
 
         conn.close()
+        logging.info('Reused: ' + reused)
         return reused
 
     def answer(self, question, answer):
-        answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
+        answer_content = ""
         if IS_DEBUG:
             results = json.loads(
                 '{"answers": [['
@@ -99,6 +107,7 @@ class TqaThread(threading.Thread):
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         for result in results['answers'][0]:
+            answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
             if 'wiki' in result['id']:
                 url_word = result['id'].split('@')
                 url = url_word[0]
@@ -109,9 +118,8 @@ class TqaThread(threading.Thread):
                 filename = os.path.basename(result['id'])
                 answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
                 answer_content += '> %s\n\n' % result['text']
-        if results:
-            answer.answer_text = answer_content
-            answer.save()
+
+        return answer_content
 
     def run(self):
         answer = Answer()
@@ -120,9 +128,13 @@ class TqaThread(threading.Thread):
         question_title = self.question.title
         question_description = self.question.description
 
-        reused = self.reuse(question_title, question_description)
-        if not reused:
-            self.answer(question_title, answer)
+        answer_content = self.reuse(question_title, question_description)
+        if not answer_content:
+            answer_content = self.answer(question_title, answer)
+
+        if answer_content:
+            answer.answer_text = answer_content
+            answer.save()
 
 # ------------------------------------------------------------------------------
 # 自动回答线程 End
