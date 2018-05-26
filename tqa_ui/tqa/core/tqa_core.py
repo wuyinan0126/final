@@ -85,7 +85,7 @@ class TqaThread(threading.Thread):
 
             cursor.execute(sql)
             row = cursor.fetchone()
-            if row and row[0].strip():
+            if row:
                 reused = row[0]
 
         conn.close()

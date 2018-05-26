@@ -72,7 +72,7 @@ class CoreNlpTokenizer():
         """ 将text输入self.corenlp句柄
         :return: Tokens，Tokens中的data包括多个(TEXT, TEXT_WS, SPAN, POS, LEMMA, NER)
         """
-        logger.info(text[0:10] + "..." if len(text) > 10 else text)
+        # logger.info(text[0:10] + "..." if len(text) > 10 else text)
 
         # 如果在text中出现了NLP>则返回错误
         if 'NLP>' in text:
@@ -89,7 +89,7 @@ class CoreNlpTokenizer():
         # 输入text
         try:
             self.corenlp.sendline(text.encode('utf-8'))
-            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=10)
+            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=5)
         except pexpect.exceptions.TIMEOUT as e:
             logger.info("ERROR in Tokenizer: " + (text[0:100] + "..." if len(text) > 100 else text))
             self.corenlp.sendline(' '.join(self.cmd))

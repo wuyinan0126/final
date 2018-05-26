@@ -45,7 +45,7 @@ class FastTextMatcher():
             if token:
                 ngram = token.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
                 ngram = ' '.join(ngram)
-                logger.info('Question ngram: ' + ngram)
+                # logger.info('Question ngram: ' + ngram)
                 ngrams.append(ngram)
             else:
                 ngrams.append('')
