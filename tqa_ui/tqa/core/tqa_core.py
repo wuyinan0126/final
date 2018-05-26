@@ -38,7 +38,7 @@ class TqaThread(threading.Thread):
         self.question = question
         self.user = User.objects.get(pk=1)
 
-    def reuse(self, question):
+    def reuse(self, question_title, question_description):
         conn = Sqlite().get_conn()
         cursor = conn.cursor()
 
@@ -48,19 +48,19 @@ class TqaThread(threading.Thread):
         cursor.execute(sql)
         rows = cursor.fetchall()
 
-        questions = [question]
+        questions = [{'id': 0, 'title': question_title, 'desc': question_description}]
         for row in rows:
-            id = row[0]
+            id = int(row[0])
             title = row[1]
             description = row[2]
-            questions.append(id + "#" + (title + " " + description).replace('$', '').replace('#', ''))
+            questions.append({'id': id, 'title': title, 'desc': description})
 
         if IS_DEBUG:
             result = json.loads(
                 '{"id": "1", "score": 0.5},', encoding="utf-8"
             )
         else:
-            payload = {'s': '$'.join(questions)}
+            payload = {'s': json.dumps(questions)}
             url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
             result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
@@ -118,12 +118,11 @@ class TqaThread(threading.Thread):
         answer.question = self.question
         answer.user = self.user
         question_title = self.question.title
-        question_text = self.question.description
-        question_content = question_title  # question_title + question_text
+        question_description = self.question.description
 
-        reused = self.reuse(question_content)
+        reused = self.reuse(question_title, question_description)
         if not reused:
-            self.answer(question_content, answer)
+            self.answer(question_title, answer)
 
 # ------------------------------------------------------------------------------
 # 自动回答线程 End

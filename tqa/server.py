@@ -59,7 +59,8 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
                 content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
         elif questions:
             # questions: id#question_content$id#question_content => {"id": "1", "score": 0.5}
-            id, score = self.server.core.reuse([q.split('#') for q in questions.split('$')])
+            questions = json.loads(questions)
+            id, score = self.server.core.reuse(questions)
             if id and score:
                 content = json.dumps({'id': id, 'score': score}, indent=2, separators=(',', ': '))
 
@@ -143,16 +144,19 @@ class TqaCore(object):
             min=int(end - start) // 60, sec=int(end - start) % 60)
         )
 
-    def reuse(self, id_questions):
+    def reuse(self, questions):
         ids = []
-        questions = []
-        for iq in id_questions:
-            ids.append(iq[0])
-            questions.append(iq[1])
+        titles = []
+        descriptions = []
+        for question in questions:
+            ids.append(question['id'])
+            titles.append(question['title'])
+            descriptions.append(question['desc'])
 
-        q_tokens = self.pool.map_async(tokenize, questions)
+        # q_tokens包含标题和描述
+        q_tokens = self.pool.map_async(tokenize, [titles[i] + ' ' + descriptions[i] for i in range(0, len(titles))])
         q_tokens = q_tokens.get()
-        score, index = self.matcher.match(q_tokens)
+        score, index = self.matcher.match(q_tokens, titles, descriptions)
         return ids[index], score
 
     def answer(self, question):

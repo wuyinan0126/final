@@ -38,16 +38,16 @@ class FastTextMatcher():
         similarities = sorted(similarities, reverse=True)
         return similarities[:k]
 
-    def match(self, tokens_list):
+    def match(self, tokens, titles, descriptions):
         ngrams = []
-        for tokens in tokens_list:
+        for token in tokens:
             # 获得去除了停用词、标点的grams list，每个gram用空格连接，如2gram: ['a','ab','b','bc']
-            ngram = tokens.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
+            ngram = token.ngrams(n=2, uncased=False, filter_fn=grams_filter, as_strings=True)
             ngram = ' '.join(ngram)
             logger.info('Question ngram: ' + ngram)
             ngrams.append(ngram)
 
-        source = ''.join(tokens_list[0].words_ws())
+        source = titles[0] + descriptions[0]
         logger.info("Source question: " + source)
 
         # top_k_related: [(related_score, index),]
@@ -56,16 +56,18 @@ class FastTextMatcher():
         top_k_similar = []
 
         for related in top_k_related:
-            related, index = related
-            target = ''.join(tokens_list[index].words_ws())
-            similar = self.get_baidu_similar(source, target)
+            related_score, index = related
+            target = titles[index] + descriptions[index]
+            similar_score = self.get_baidu_similar(source, target)
             logger.info("Question related/similar score: %f/%f %s" % (
-                related, similar, ''.join(tokens_list[index].words_ws())
+                related_score, similar_score, titles[index] + '=>' + descriptions[index]
             ))
-            top_k_similar.append((similar, index))
+            top_k_similar.append((similar_score, index))
 
         top_k_similar = sorted(top_k_similar, reverse=True)
-        logger.info("Most similar: %f %s" % (top_k_similar[0][0], ''.join(tokens_list[top_k_similar[0][1]].words_ws())))
+        logger.info("Most similar: %f %s" % (
+            top_k_similar[0][0], titles[top_k_similar[0][1]] + '=>' + descriptions[top_k_similar[0][1]]
+        ))
 
         return top_k_similar[0][0], top_k_similar[0][1]
 

@@ -143,7 +143,7 @@ python reader/trainer.py \
 # ------------------------------------------------------------------------------
 # 给定问题和文档预测答案
 python reader/predictor.py \
-    --model-path models/reader/zh_20180314_184532.mdl \
+    --model-path models/reader/reader_20180314_184532.mdl \
     --document "小明有双蓝色的鞋子，一件白色的毛衣和一只红色的羊。" \
     --question "小明的毛衣是什么颜色的？" \
     --top-k-answers 5 \
@@ -174,7 +174,7 @@ python server.py \
     --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz]' \
     --tfidf-rank-k 2 \
     --top-k-answers 1 \
-    --reader-model-path models/reader/zh_20180525_103013.mdl \
+    --reader-model-path models/reader/reader_20180525_103013.mdl \
     --use-cuda False \
     --num-workers 12 \
     --embedded-corpus-path models/embeddings/cc.zhs.300.vec \
