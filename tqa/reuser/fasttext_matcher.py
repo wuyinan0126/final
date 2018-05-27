@@ -17,10 +17,11 @@ SECRET_KEY = 'PomMd9fNOsFHGV6zcfSe4Hev1CTiiSxk'
 
 
 class FastTextMatcher():
-    def __init__(self, bin_path):
+    def __init__(self, bin_path, threshold=0.5):
         fasttext_model_path = os.path.join(DATA_DIR, bin_path)
         self.fasttext = load_model(fasttext_model_path)
         self.client = AipNlp(APP_ID, API_KEY, SECRET_KEY)
+        self.threshold = threshold
 
     def __similarity(self, v1, v2):
         n1 = numpy.linalg.norm(v1)
@@ -68,11 +69,11 @@ class FastTextMatcher():
             top_k_similar.append((similar_score, index))
 
         top_k_similar = sorted(top_k_similar, reverse=True)
-        logger.info("Most similar: %f %s" % (
+        logger.info("Most similar: %f %s\n" % (
             top_k_similar[0][0], titles[top_k_similar[0][1]] + '=>' + descriptions[top_k_similar[0][1]]
-        ))
+        ) + '-' * 80)
 
-        return top_k_similar[0][0], top_k_similar[0][1]
+        return top_k_similar[0][0], top_k_similar[0][1] if top_k_similar[0][0] > self.threshold else -1, -1
 
     def get_baidu_similar(self, source, target):
         def cut_text(text):

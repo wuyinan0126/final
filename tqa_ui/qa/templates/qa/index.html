@@ -18,7 +18,7 @@
     <div class="row">
       <div class="col-sm-1 ans"><small><div class="ques">{{ question.num_answers }}</div>回答</small></div>
       <div class="col-sm-1 ans"><small><div class="ques">{{ question.hit_count.hits }}</div>浏览</small></div>
-      <div class="col">
+      <div class="col-sm-9">
         {% if question.reward %}<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>{% endif %}
         <h3><a href="{% url 'qa_detail' question.id %}">{{ question.title }}</a></h3>
         <br/>
@@ -62,7 +62,7 @@
   <div class="row">
   <div class="col-sm-1 ans"><small><div class="ques">{{ question.num_answers }}</div>回答</small></div>
   <div class="col-sm-1 ans"><small><div class="ques">{{ question.hit_count.hits }}</div>浏览</small></div>
-  <div class="col">
+  <div class="col-sm-9">
     {% if question.num_answers %}<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>{% endif %}
     <h3><a href="{% url 'qa_detail' question.id %}">{{ question.title }}</a></h3>
       <br/>
@@ -103,7 +103,7 @@
   <div class="row">
   <div class="col-sm-1 ans"><small><div class="ques">{{ question.num_answers }}</div>回答</small></div>
   <div class="col-sm-1 ans"><small><div class="ques">{{ question.hit_count.hits }}</div>浏览</small></div>
-  <div class="col">
+  <div class="col-sm-9">
     {% if question.num_answers %}<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>{% endif %}
     <h3><a href="{% url 'qa_detail' question.id %}">{{ question.title }}</a></h3>
       <br/>

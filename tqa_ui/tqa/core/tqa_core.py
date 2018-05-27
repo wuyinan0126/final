@@ -50,7 +50,18 @@ class TqaThread(threading.Thread):
         cursor = conn.cursor()
 
         sql = '''
-            SELECT id, title, description FROM main.qa_question
+            SELECT q.id, q.title, q.description FROM
+            (
+                SELECT id, title, description 
+                FROM main.qa_question
+            ) q
+            JOIN 
+            (
+                SELECT DISTINCT(question_id) AS question_id
+                FROM main.qa_answer
+                WHERE (positive_votes - negative_votes > 0) OR answer > 0
+            ) a
+            ON q.id = a.question_id
         '''
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -71,14 +82,25 @@ class TqaThread(threading.Thread):
             url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
             result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
+        reused = ''
         most_similar_id = result['id']
         most_similar_score = float(result['score'])
 
-        reused = ''
-        if most_similar_id and most_similar_score > 0.5:
+        if most_similar_id != -1 and most_similar_score != -1:
             sql = '''
-                SELECT answer_text, MAX(positive_votes) FROM main.qa_answer
-                WHERE question_id={id} AND (positive_votes - negative_votes > 0)
+                SELECT a.answer_text, q.id, q.title, q.slug FROM
+                (
+                    SELECT id, title, description, slug
+                    FROM main.qa_question 
+                    WHERE id = {id} 
+                ) q
+                JOIN
+                (
+                    SELECT question_id, answer_text, MAX(positive_votes) 
+                    FROM main.qa_answer
+                    WHERE question_id = {id} AND (positive_votes - negative_votes > 0)
+                ) a
+                WHERE q.id = a.question_id
             '''.format(
                 id=most_similar_id
             )
@@ -86,10 +108,18 @@ class TqaThread(threading.Thread):
             cursor.execute(sql)
             row = cursor.fetchone()
             if row:
-                reused = row[0]
+                answer_text, question_id, question_title, question_slug = row
+                reused = '' if answer_text.strip() == '' else \
+                    '导学小助手为您找到论坛中相似的问题：[{similar_question_title}]({link} "{similar_question_title}")，' \
+                    '如果解决了您的问题，记得点赞哦～\n\n' \
+                    '> {answer_text}\n\n'.format(
+                        similar_question_title=question_title,
+                        link='/question/%d/%s/' % (question_id, question_slug),
+                        answer_text=answer_text.replace('\n\n', '\n\n>')
+                    )
 
         conn.close()
-        logging.info('Reused: ' + reused)
+        # logging.info('Reused: ' + reused)
         return reused
 
     def answer(self, question, answer):

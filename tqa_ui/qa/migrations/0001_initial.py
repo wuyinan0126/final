@@ -22,10 +22,23 @@ def create_tqa_assistant(apps, schema_editor):
     tqa_assistant.save()
 
 
-def create_test_user(apps, schema_editor):
+def create_my_user(apps, schema_editor):
     User = apps.get_registered_model('auth', 'User')
     tqa_assistant = User(
         pk=2,
+        username='wuyinan',
+        email='wuyinan0126@gmail.com',
+        password=make_password('ada'),
+        is_superuser=False,
+        is_staff=True
+    )
+    tqa_assistant.save()
+
+
+def create_test_user(apps, schema_editor):
+    User = apps.get_registered_model('auth', 'User')
+    tqa_assistant = User(
+        pk=3,
         username='test',
         email='wuyinan0126@gmail.com',
         password=make_password('test'),
@@ -166,5 +179,6 @@ class Migration(migrations.Migration):
         # 创建导学助手
         # ------------------------------------------------------------------------------
         migrations.RunPython(create_tqa_assistant),
+        migrations.RunPython(create_my_user),
         migrations.RunPython(create_test_user),
     ]

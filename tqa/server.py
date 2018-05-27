@@ -63,6 +63,8 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
             id, score = self.server.core.reuse(questions)
             if id and score:
                 content = json.dumps({'id': id, 'score': score}, indent=2, separators=(',', ': '))
+            else:
+                content = json.dumps({'id': -1, 'score': -1}, indent=2, separators=(',', ': '))
 
         content = content.encode('utf-8').decode('raw-unicode-escape')
         self.send_response(200)
@@ -99,7 +101,8 @@ class TqaCore(object):
 
         logger.info('Initializing reuser...')
         bin_path = reuser_opts.get('embedded_corpus_bin_path')
-        self.matcher = FastTextMatcher(bin_path)
+        threshold = reuser_opts.get('threshold')
+        self.matcher = FastTextMatcher(bin_path, threshold)
 
         logger.info('Initializing document rankers...')
         tfidf_model_paths = ranker_opts.get('tfidf_model_paths')
@@ -231,6 +234,8 @@ if __name__ == '__main__':
     parser.add_argument('--use-cuda', type='bool', default=DEFAULTS['use_cuda'])
     parser.add_argument('--num-workers', type=int, default=DEFAULTS['num_workers'])
     parser.add_argument('--top-k-answers', type=int, default=DEFAULTS['top_k_answers'])
+    parser.add_argument('--threshold', type=float, default=DEFAULTS['threshold'])
+
 
     args = parser.parse_args()
     args.reader_model_path = os.path.join(DATA_DIR, args.reader_model_path)
@@ -252,6 +257,7 @@ if __name__ == '__main__':
         },
         reuser_opts={
             'embedded_corpus_bin_path': args.embedded_corpus_bin_path,
+            'threshold': args.threshold,
         },
         num_workers=args.num_workers,
     )

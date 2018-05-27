@@ -172,10 +172,11 @@ python classifier/trainer.py \
 # ------------------------------------------------------------------------------
 python server.py \
     --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz]' \
-    --tfidf-rank-k 2 \
+    --tfidf-rank-k 1 \
     --top-k-answers 1 \
     --reader-model-path models/reader/reader_20180525_103013.mdl \
     --use-cuda False \
     --num-workers 12 \
     --embedded-corpus-path models/embeddings/cc.zhs.300.vec \
-    --embedded-corpus-bin-path models/embeddings/cc.zh.300.bin
+    --embedded-corpus-bin-path models/embeddings/cc.zh.300.bin \
+    --threshold 0.6
