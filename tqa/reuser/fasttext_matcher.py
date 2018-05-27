@@ -73,7 +73,7 @@ class FastTextMatcher():
             top_k_similar[0][0], titles[top_k_similar[0][1]] + '=>' + descriptions[top_k_similar[0][1]]
         ) + '-' * 80)
 
-        return top_k_similar[0][0], top_k_similar[0][1] if top_k_similar[0][0] > self.threshold else -1, -1
+        return (top_k_similar[0][0], top_k_similar[0][1]) if top_k_similar[0][0] > self.threshold else (-1, -1)
 
     def get_baidu_similar(self, source, target):
         def cut_text(text):
