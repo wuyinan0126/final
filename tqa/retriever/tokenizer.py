@@ -38,7 +38,7 @@ class CoreNlpTokenizer():
         annotators = ','.join(annotators)
         options = ','.join(['untokenizable=noneDelete', 'invertible=true'])
 
-        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang='zh')
+        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang='zh', timeout=15000)
         self.props = {
             'annotators': annotators,
             'pipelineLanguage': 'zh',
