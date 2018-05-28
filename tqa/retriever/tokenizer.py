@@ -89,7 +89,7 @@ class CoreNlpTokenizer():
         # 输入text
         try:
             self.corenlp.sendline(text.encode('utf-8'))
-            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=5)
+            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=10)
         except pexpect.exceptions.TIMEOUT as e:
             logger.info("ERROR in Tokenizer: " + (text[0:100] + "..." if len(text) > 100 else text))
             self.corenlp.sendline(' '.join(self.cmd))

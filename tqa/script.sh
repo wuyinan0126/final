@@ -64,7 +64,7 @@ python retriever/tfidf_ranker.py \
 python retriever/db_builder.py \
     --documents-dir documents/course/ \
     --tokenizer-heap 4g \
-    --num-workers 12
+    --num-workers 2
 
 # 建立tfidf course文件
 python retriever/tfidf_builder.py \

@@ -113,6 +113,8 @@ def documents_iterate(documents_dir, db_table, cursor):
                             presentation = Presentation(document_path)
                             text = handle_pptx(presentation)
                             yield (id, text)
+                        else:
+                            logger.info("IGNORE EXIST: " + id)
                     # PLAIN TEXT
                     elif filename.endswith(".txt"):
                         document_path = os.path.join(dirpath, filename)
@@ -122,6 +124,8 @@ def documents_iterate(documents_dir, db_table, cursor):
                         if cursor.fetchone()[0] == 0:
                             text = handle_txt(document_path)
                             yield (id, text)
+                        else:
+                            logger.info("IGNORE EXIST: " + id)
                     # WIKI JSON
                     elif filename.endswith(".json"):
                         document_path = os.path.join(dirpath, filename)
