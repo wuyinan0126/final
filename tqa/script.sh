@@ -112,7 +112,7 @@ python reader/trainer.py \
     --checkpoint False \
     --train-data-path datasets/webqa/train.txt \
     --dev-data-path datasets/webqa/valid.txt \
-    --embedded-corpus-path models/embeddings/zh.fasttext.wiki.300d.txt \
+    --embedded-corpus-path models/embeddings/cc.zhs.300.vec \
     --pretrained-model-path models/reader/zh_lstm_256h_10000k_20180314_004818.mdl
 
 # 训练数据集 [恢复检查点]

@@ -113,6 +113,16 @@ def documents_iterate(documents_dir, db_table, cursor):
                             presentation = Presentation(document_path)
                             text = handle_pptx(presentation)
                             yield (id, text)
+                    # PLAIN TEXT
+                    elif filename.endswith(".txt"):
+                        document_path = os.path.join(dirpath, filename)
+                        id = utils.normalize(document_path.replace(documents_dir, ''))
+                        cursor.execute(
+                            "SELECT COUNT(*) FROM %s WHERE document_id = '%s'" % (db_table, utils.normalize(id)))
+                        if cursor.fetchone()[0] == 0:
+                            text = handle_txt(document_path)
+                            yield (id, text)
+                    # WIKI JSON
                     elif filename.endswith(".json"):
                         document_path = os.path.join(dirpath, filename)
                         with open(document_path) as file:
@@ -131,6 +141,20 @@ def documents_iterate(documents_dir, db_table, cursor):
                     raise RuntimeError('Unsupported-format file: %s' % filename)
     else:
         raise RuntimeError('Path %s is not directory or invalid' % documents_dir)
+
+
+def handle_txt(document_path):
+    def clean_txt(t):
+        t = re.sub(r"[\'\"\\]", " ", t)
+        t = re.sub(r"\t+|\n+|\r+", "", t)  # 去除非空格的空白符
+        t = re.sub(r"\s{2,}", " ", t)
+        return t
+
+    with open(document_path, encoding='utf-8') as file:
+        all = file.readlines()
+        all = list(filter(lambda x: x and x.strip() != '', all))
+        all = [clean_txt(line) for line in all]
+        return ' '.join(all)
 
 
 def handle_pptx(presentation):

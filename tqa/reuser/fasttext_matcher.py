@@ -72,7 +72,7 @@ class FastTextMatcher():
         logger.info("Most similar: %f %s" % (
             top_k_similar[0][0], titles[top_k_similar[0][1]] + '=>' + descriptions[top_k_similar[0][1]]
         ))
-        logger.info("*" * 80)
+        logger.info("-" * 80)
 
         return (top_k_similar[0][0], top_k_similar[0][1]) if top_k_similar[0][0] > self.threshold else (-1, -1)
 
