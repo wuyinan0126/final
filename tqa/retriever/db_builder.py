@@ -132,7 +132,7 @@ def documents_iterate(documents_dir, db_table, cursor):
                         with open(document_path) as file:
                             for line in file:
                                 document = json.loads(line)
-                                title = get_wiki_title(document['text'])
+                                title = clean_title(document['title'])
                                 id = utils.normalize(document['url'] + "@" + title)
                                 text = document['text']
                                 text = clean(text)
@@ -219,9 +219,8 @@ def tokenize(id_text_pairs):
     return utils.normalize(id), utils.normalize(text), tokens
 
 
-def get_wiki_title(text):
-    m = re.search(r'^.*?\s+', text)
-    title = m.group().strip()
+def clean_title(title):
+    title = title.strip()
     title = re.sub(r"[\'\"\\]", " ", title)
     title = re.sub(r"\t+|\n+|\r+", "", title)  # 去除非空格的空白符
     title = re.sub(r"\s{2,}", "", title)  # 去除2至多个空格符
@@ -240,7 +239,7 @@ def get_wiki_title(text):
     title = re.sub(r'\(\s*?\)', "", title)
     title = re.sub(r" ", "_", title)
     title = re.sub(r"@", "_", title)
-    return m.group().strip()
+    return title
 
 
 def clean(text):
