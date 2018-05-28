@@ -22,7 +22,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(console)
 
-VALID_FORMAT = (".pptx", ".json")
+VALID_FORMAT = (".pptx", ".json", ".txt")
 
 TOKENIZER = None
 
