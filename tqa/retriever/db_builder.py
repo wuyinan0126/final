@@ -150,6 +150,7 @@ def documents_iterate(documents_dir, db_table, cursor):
 def handle_txt(document_path):
     def clean_txt(t):
         t = re.sub(r"[\'\"\\]", " ", t)
+        t = re.sub(u'\u3000', ' ', t)
         t = re.sub(r"\t+|\n+|\r+", "", t)  # 去除非空格的空白符
         t = re.sub(r"\s{2,}", " ", t)
         return t

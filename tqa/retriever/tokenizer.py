@@ -41,7 +41,7 @@ class CoreNlpTokenizer():
         # 英文分词 on ubuntu
         java -mx3g -cp "/home/wuyinan/Desktop/final/data/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,ner -tokenize.options untokenizable=noneDelete,invertible=true -outputFormat json -prettyPrint false
         # 中文分词 on ubuntu
-        java -mx3g -cp "/home/wuyinan/Desktop/final/data/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,ner -tokenize.options untokenizable=noneDelete,invertible=true -outputFormat json -prettyPrint false
+        java -mx5g -cp "/home/wuyinan/Desktop/final/data/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -props StanfordCoreNLP-chinese.properties -annotators tokenize,ssplit,pos,lemma,ner -tokenize.options untokenizable=noneDelete,invertible=true -outputFormat json -prettyPrint false
         """
         # 命令正常运行后将出现交互提示符NLP>
         if self.language == 'zh':
