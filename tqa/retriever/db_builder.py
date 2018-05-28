@@ -159,7 +159,7 @@ def handle_txt(document_path):
         all = file.readlines()
         all = list(filter(lambda x: x and x.strip() != '', all))
         text = ' '.join(all)
-        text = clean_txt(all)
+        text = clean_txt(text)
         # 除去32bit的unicode，只保留16bit以下的unicode，否则在java分词的时候会出错
         text = "".join([char if ord(char) < 65535 else "?" for char in text])
         assert "  " not in text, "Contains double space!"
