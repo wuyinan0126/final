@@ -26,6 +26,7 @@ class CoreNlpTokenizer():
         self.annotators = copy.deepcopy(kwargs.get('annotators', DEFAULTS['tokenizer_annotators']))
         self.classpath = os.path.join(DATA_DIR, kwargs.get('classpath', DEFAULTS['tokenizer_classpath']))
         self.heap = kwargs.get('heap', DEFAULTS['tokenizer_heap'])
+        self.timeout = 600000
 
         # annotators: tokenize(分词), ssplit(断句), pos(词性标注), lemma(词元化), ner(命名实体识别)
         annotators = ['tokenize', 'ssplit']
@@ -38,9 +39,9 @@ class CoreNlpTokenizer():
         annotators = ','.join(annotators)
         options = ','.join(['untokenizable=noneDelete', 'invertible=true'])
 
-        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang='zh', timeout=60000)
+        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang=self.language, timeout=self.timeout)
         self.props = {
-            'timeout': '60000',
+            'timeout': '600000',
             'annotators': annotators,
             'pipelineLanguage': 'zh',
             'outputFormat': 'json',
@@ -86,6 +87,10 @@ class CoreNlpTokenizer():
         except:
             logger.info(
                 "ERROR in Tokenizer: %s\noutput: %s" % ((text[0:100] + "..." if len(text) > 100 else text), output))
+            if not self.nlp:
+                self.close()
+                self.nlp = None
+            self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang=self.language, timeout=self.timeout)
             return None
 
         data = []
