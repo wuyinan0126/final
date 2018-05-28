@@ -45,7 +45,7 @@ class CoreNlpTokenizer():
             'outputFormat': 'json',
             'prettyPrint': 'False',
             'tokenize.options': options,
-            'nthreads': 4
+            # 'nthreads': 4
         }
 
     def tokenize(self, text):
