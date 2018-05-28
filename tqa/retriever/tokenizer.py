@@ -79,8 +79,7 @@ class CoreNlpTokenizer():
             }
           ]
         }"""
-        start = output.find(b'{"sentences":')
-        output = json.loads(output[start:].decode('utf-8'))
+        output = json.loads(output.decode('utf-8'))
 
         data = []
         tokens = [t for s in output['sentences'] for t in s['tokens']]
