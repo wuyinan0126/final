@@ -159,7 +159,11 @@ def handle_txt(document_path):
         all = file.readlines()
         all = list(filter(lambda x: x and x.strip() != '', all))
         all = [clean_txt(line) for line in all]
-        return ' '.join(all)
+        text = ' '.join(all)
+        # 除去32bit的unicode，只保留16bit以下的unicode，否则在java分词的时候会出错
+        text = "".join([char if ord(char) < 65535 else "?" for char in text])
+        assert "  " not in text, "Contains double space!"
+        return text
 
 
 def handle_pptx(presentation):
@@ -265,7 +269,7 @@ def clean(text):
     text = re.sub(r"\s{2,}", "", text)  # 去除2至多个空格符
 
     # 除去32bit的unicode，只保留16bit以下的unicode，否则在java分词的时候会出错
-    "".join([char if ord(char) < 65535 else "?" for char in text])
+    text = "".join([char if ord(char) < 65535 else "?" for char in text])
     assert "  " not in text, "Contains double space!"
     return utils.normalize(text)
 
