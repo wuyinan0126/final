@@ -37,6 +37,10 @@ class Sqlite(object):
 # ------------------------------------------------------------------------------
 
 IS_DEBUG = False
+SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
+
+
+# SERVER_URL = 'http://10.2.3.83:9126/'
 
 
 class TqaThread(threading.Thread):
@@ -79,7 +83,7 @@ class TqaThread(threading.Thread):
             )
         else:
             payload = {'s': json.dumps(questions)}
-            url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
+            url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
             result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         reused = ''
@@ -133,7 +137,7 @@ class TqaThread(threading.Thread):
             )
         else:
             payload = {'q': question}
-            url = 'http://10.2.3.83:9126/?' + urlencode(payload, quote_via=quote_plus)
+            url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         for result in results['answers'][0]:
