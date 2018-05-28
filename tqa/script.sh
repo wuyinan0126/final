@@ -11,7 +11,7 @@ export PYTHONPATH=/home/wuyinan/Desktop/final
 # 测试tokenizer
 python retriever/tokenizer.py \
     --heap 5g \
-    --text "在日常运营中会接触许多指标，有时候分辨不清楚是如何计算出来的，在此篇文章中主要叙述媒体实验室数据指标，给出相应的公式和算法。如果大家有看到错误或者遗漏，欢迎及时更改补充。"
+    --text ""
 # ------------------------------------------------------------------------------
 # wiki documents retriever相关
 # 爬取Wiki => 994014个词条
@@ -45,7 +45,7 @@ done
 python retriever/db_builder.py \
     --documents-dir documents/wiki/ \
     --tokenizer-heap 5g \
-    --num-workers 12
+    --num-workers 10
 
 # 建立tfidf wiki文件
 python retriever/tfidf_builder.py \
@@ -63,7 +63,7 @@ python retriever/tfidf_ranker.py \
 # 建立documents course db
 python retriever/db_builder.py \
     --documents-dir documents/course/ \
-    --tokenizer-heap 4g \
+    --tokenizer-heap 5g \
     --num-workers 4
 
 # 建立tfidf course文件

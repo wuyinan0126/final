@@ -10,6 +10,8 @@ scipy
 nltk
 pexpect
 
+stanfordcorenlp
+
 ##### install torch for linux, python3.6, cuda8.0
 # pip3 install http://download.pytorch.org/whl/cu80/torch-0.3.1-cp36-cp36m-linux_x86_64.whl
 ##### install torch for osx, python3.6, no cuda

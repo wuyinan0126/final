@@ -79,7 +79,11 @@ class CoreNlpTokenizer():
             }
           ]
         }"""
-        output = json.loads(output)
+        try:
+            output = json.loads(output)
+        except:
+            logger.info("ERROR in Tokenizer: %s\noutput: %s" % ((text[0:100] + "..." if len(text) > 100 else text), output))
+            return None
 
         data = []
         tokens = [t for s in output['sentences'] for t in s['tokens']]
