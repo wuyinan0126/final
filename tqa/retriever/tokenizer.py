@@ -4,7 +4,8 @@ import json
 import logging
 
 import os
-import pexpect
+
+from stanfordcorenlp import StanfordCoreNLP
 
 from tqa import DEFAULTS, DATA_DIR
 from tqa.retriever.tokens import Tokens
@@ -37,36 +38,14 @@ class CoreNlpTokenizer():
         annotators = ','.join(annotators)
         options = ','.join(['untokenizable=noneDelete', 'invertible=true'])
 
-        """
-        # 英文分词 on ubuntu
-        java -mx3g -cp "/home/wuyinan/Desktop/final/data/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,ner -tokenize.options untokenizable=noneDelete,invertible=true -outputFormat json -prettyPrint false
-        # 中文分词 on ubuntu
-        java -mx5g -cp "/home/wuyinan/Desktop/final/data/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -props StanfordCoreNLP-chinese.properties -annotators tokenize,ssplit,pos,lemma,ner -tokenize.options untokenizable=noneDelete,invertible=true -outputFormat json -prettyPrint false
-        """
-        # 命令正常运行后将出现交互提示符NLP>
-        if self.language == 'zh':
-            self.cmd = ['java', '-mx' + self.heap, '-cp', '"%s"' % self.classpath,
-                        'edu.stanford.nlp.pipeline.StanfordCoreNLP',
-                        '-props', 'StanfordCoreNLP-chinese.properties',
-                        '-annotators', annotators,
-                        '-tokenize.options', options, '-outputFormat', 'json', '-prettyPrint', 'false']
-        else:
-            self.cmd = ['java', '-mx' + self.heap, '-cp', '"%s"' % self.classpath,
-                        'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', annotators,
-                        '-tokenize.options', options, '-outputFormat', 'json', '-prettyPrint', 'false']
-
-        # logger.info(' '.join(self.cmd))
-
-        # 使用pexpect是使得corenlp子进程keep alive，并获得句柄self.corenlp使得后续还可调用
-        self.corenlp = pexpect.spawn('/bin/bash', maxread=100000, timeout=300)
-        self.corenlp.setecho(False)
-        self.corenlp.sendline('stty -icanon')
-        self.corenlp.sendline(' '.join(self.cmd))
-        self.corenlp.delaybeforesend = 0.1
-        # 在 输入命令执行 到 读取结果 需要时间，不能设为0，设为100ms
-        self.corenlp.delayafterread = 0.1
-        # expect_exact: 不使用正则表达式精确匹配NLP>，匹配则返回0
-        self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=300)
+        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang='zh')
+        self.props = {
+            'annotators': annotators,
+            'pipelineLanguage': 'zh',
+            'outputFormat': 'json',
+            'prettyPrint': 'False',
+            'tokenize.options': options,
+        }
 
     def tokenize(self, text):
         """ 将text输入self.corenlp句柄
@@ -74,30 +53,9 @@ class CoreNlpTokenizer():
         """
         # logger.info(text[0:10] + "..." if len(text) > 10 else text)
 
-        # 如果在text中出现了NLP>则返回错误
-        if 'NLP>' in text:
-            raise RuntimeError('Bad token (NLP>) in text!')
-
-        # 输入q退出子进程
-        if text.lower().strip() == 'q':
-            token = text.strip()
-            index = text.index(token)
-            data = [(token, text[index:], (index, index + 1), 'NN', 'q', 'O')]
-            return Tokens(data, self.annotators)
-
         text = text.replace('\n', '\t')
-        # 输入text
-        try:
-            self.corenlp.sendline(text.encode('utf-8'))
-            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=10)
-        except pexpect.exceptions.TIMEOUT as e:
-            logger.info("ERROR in Tokenizer: " + (text[0:100] + "..." if len(text) > 100 else text))
-            self.corenlp.sendline(' '.join(self.cmd))
-            self.corenlp.expect_exact('NLP>', searchwindowsize=-1, timeout=300)
-            return None
 
-        # self.corenlp.before: 保存了到匹配到关键字为止，缓存里面已有的所有数据
-        output = self.corenlp.before
+        output = self.nlp.annotate(text, properties=self.props)
         """ 有效输出: 
         {
           "sentences": [
@@ -145,7 +103,7 @@ class CoreNlpTokenizer():
         return Tokens(data, self.annotators)
 
     def close(self):
-        pass
+        self.nlp.close()
 
 
 if __name__ == '__main__':
