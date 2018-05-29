@@ -176,7 +176,7 @@ def handle_srt(document_path):
                 subtitles.append(all[i + 1])
                 i += 1
 
-        text = '\t'.join(subtitles)
+        text = '。'.join(subtitles)
         text = clean_txt(text)
         # 除去32bit的unicode，只保留16bit以下的unicode，否则在java分词的时候会出错
         text = "".join([char if ord(char) < 65535 else "?" for char in text])

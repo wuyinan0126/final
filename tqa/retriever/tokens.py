@@ -12,7 +12,7 @@ class Tokens(object):
     POS = 3  # part of speech: 词性: 'UH'
     LEMMA = 4  # 词元: 'hello'
     NER = 5  # named entity recognition: 命名实体识别: 'O'
-    MARKS = ['.', '!', '?', '。', '！', '？', '\t']  # 切割标志
+    MARKS = ['!', '?', '。', '！', '？']  # 切割标志
 
     def __init__(self, data, annotators=DEFAULTS['tokenizer_annotators'], opts=None):
         self.data = data
