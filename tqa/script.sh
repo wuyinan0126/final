@@ -70,11 +70,30 @@ python retriever/db_builder.py \
 python retriever/tfidf_builder.py \
     --db-table course \
     --tfidf-model-dir models/retriever/ \
-    --num-workers 12
+    --num-workers 12 \
 
 # 测试tfidf course rank
 python retriever/tfidf_ranker.py \
     --tfidf-model-path models/retriever/course_tfidf_2gram_16777216hash.npz \
+    --k 5 \
+    --query '什么是广义表？'
+# ------------------------------------------------------------------------------
+# video documents retriever相关
+# 建立documents video db
+python retriever/db_builder.py \
+    --documents-dir documents/video/ \
+    --tokenizer-heap 5g \
+    --num-workers 4
+
+# 建立tfidf video文件
+python retriever/tfidf_builder.py \
+    --db-table video \
+    --tfidf-model-dir models/retriever/ \
+    --num-workers 12
+
+# 测试tfidf course rank
+python retriever/tfidf_ranker.py \
+    --tfidf-model-path models/retriever/video_tfidf_2gram_16777216hash.npz \
     --k 5 \
     --query '什么是广义表？'
 # ------------------------------------------------------------------------------
@@ -171,7 +190,7 @@ python classifier/trainer.py \
 # server 相关
 # ------------------------------------------------------------------------------
 python server.py \
-    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz, models/retriever/course_tfidf_2gram_16777216hash.npz]' \
+    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz, models/retriever/course_tfidf_2gram_16777216hash.npz, models/retriever/video_tfidf_2gram_16777216hash.npz]' \
     --tfidf-rank-k 1 \
     --top-k-answers 1 \
     --reader-model-path models/reader/reader_20180525_103013.mdl \

@@ -4,6 +4,7 @@ import json
 import logging
 
 import os
+import random
 
 from stanfordcorenlp import StanfordCoreNLP
 
@@ -39,7 +40,13 @@ class CoreNlpTokenizer():
         annotators = ','.join(annotators)
         options = ','.join(['untokenizable=noneDelete', 'invertible=true'])
 
-        self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang=self.language, timeout=self.timeout)
+        self.nlp = StanfordCoreNLP(
+            self.classpath,
+            port=random.randint(9000, 65535),
+            memory=self.heap,
+            lang=self.language,
+            timeout=self.timeout
+        )
         self.props = {
             'timeout': str(self.timeout),
             'annotators': annotators,

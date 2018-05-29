@@ -140,11 +140,11 @@ class TqaThread(threading.Thread):
 
         for result in results['answers'][0]:
             answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
-            if 'txt' in result['id']:
+            if 'course' in result['id']:
                 filename = os.path.basename(result['id'])
                 answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
                 answer_content += '> %s\n\n' % result['text']
-            if 'srt' in result['id']:
+            if 'video' in result['id']:
                 video_name = os.path.basename(result['id'])
                 answer_content += '[课程视频（%s）](%s "课程视频")中的相关内容：\n\n' % (video_name, result['id'])
                 answer_content += '> %s\n\n' % result['text']
