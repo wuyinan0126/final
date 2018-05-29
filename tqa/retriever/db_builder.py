@@ -59,8 +59,7 @@ def build(documents_dir, tokenizer_heap, num_workers=None):
             document_pos MEDIUMTEXT,
             document_lemma MEDIUMTEXT,
             document_ner MEDIUMTEXT,
-            PRIMARY KEY ( document_id ),
-            INDEX [id_index] (document_id(100))
+            PRIMARY KEY ( document_id )
           ) DEFAULT CHARSET=utf8mb4
         """.format(table_name=db_table))
     else:
