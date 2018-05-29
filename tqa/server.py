@@ -54,7 +54,10 @@ class TqaHttpRequestHandler(BaseHTTPRequestHandler):
         content = ''
 
         if question:
-            answers = self.server.core.answer(question)
+            qs = question.split('@')
+            question_title = qs[0]
+            question_all = question_title if len(qs) < 2 else question_title + " " + qs[1]
+            answers = self.server.core.answer(question_title, question_all)
             if answers:
                 content = json.dumps({'answers': answers}, indent=2, separators=(',', ': '))
         elif questions:
@@ -166,20 +169,20 @@ class TqaCore(object):
         score, index = self.matcher.match(q_tokens, titles, descriptions)
         return ids[index], score
 
-    def answer(self, question):
+    def answer(self, question_title, question_all):
         start_time = time.time()
-        logger.info('Processing question: %s...' % question)
+        logger.info('Processing question: %s...' % question_title)
         logger.info('Retrieving top %d documents...' % self.tfidf_rank_k)
 
         with ThreadPool(self.num_workers) as threads:
-            _rank = partial(self.rank, question=question)
+            _rank = partial(self.rank, question_title=question_title, question_all=question_all)
             results = threads.map(_rank, self.rankers.keys())
         logger.info('Answer elapse = %d' % (time.time() - start_time))
         return results
 
-    def rank(self, db_table, question):
+    def rank(self, db_table, question_title, question_all):
         logger.info("Finding closest documents...")
-        result = [self.rankers[db_table].closest_docs(query=question, k=self.tfidf_rank_k)]
+        result = [self.rankers[db_table].closest_docs(query=question_all, k=self.tfidf_rank_k)]
         documents_ids, documents_scores = zip(*result)
         documents_ids = documents_ids[0]
         documents_scores = documents_scores[0]
@@ -189,7 +192,7 @@ class TqaCore(object):
             return None
 
         logger.info("Tokenizing question...")
-        q_tokens = self.pool.map_async(tokenize, [question])
+        q_tokens = self.pool.map_async(tokenize, [question_title])
         _build_tokens = partial(build_tokens, db_table=db_table)
         d_rank_k_tokens = self.pool.map_async(_build_tokens, documents_ids)
 

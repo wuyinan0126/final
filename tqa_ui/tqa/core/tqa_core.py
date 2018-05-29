@@ -124,7 +124,7 @@ class TqaThread(threading.Thread):
         # logging.info('Reused: ' + reused)
         return reused
 
-    def answer(self, question):
+    def answer(self, question_title, question_description):
         answer_content = ""
         if IS_DEBUG:
             results = json.loads(
@@ -134,7 +134,7 @@ class TqaThread(threading.Thread):
                 ']]}', encoding="utf-8"
             )
         else:
-            payload = {'q': question}
+            payload = {'q': question_title + "@" + question_description}
             url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
@@ -166,7 +166,7 @@ class TqaThread(threading.Thread):
 
         answer_content = self.reuse(question_title, question_description)
         if not answer_content:
-            answer_content = self.answer(question_title)
+            answer_content = self.answer(question_title, question_description)
 
         if answer_content:
             answer.answer_text = answer_content
