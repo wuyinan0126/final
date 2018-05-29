@@ -22,7 +22,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(console)
 
-VALID_FORMAT = (".pptx", ".json", ".txt")
+VALID_FORMAT = (".pptx", ".json", ".txt", ".srt")
 
 TOKENIZER = None
 
@@ -129,6 +129,17 @@ def documents_iterate(documents_dir, db_table, cursor):
                             yield (id, text)
                         else:
                             logger.info("IGNORE EXIST: " + id)
+                    # SRT SUBTITLE
+                    elif filename.endswith(".srt"):
+                        document_path = os.path.join(dirpath, filename)
+                        id = utils.normalize(document_path.replace(documents_dir, ''))
+                        cursor.execute(
+                            "SELECT COUNT(*) FROM %s WHERE document_id = '%s'" % (db_table, utils.normalize(id)))
+                        if cursor.fetchone()[0] == 0:
+                            text = handle_srt(document_path)
+                            yield (id, text)
+                        else:
+                            logger.info("IGNORE EXIST: " + id)
                     # WIKI JSON
                     elif filename.endswith(".json"):
                         document_path = os.path.join(dirpath, filename)
@@ -148,6 +159,30 @@ def documents_iterate(documents_dir, db_table, cursor):
                     raise RuntimeError('Unsupported-format file: %s' % filename)
     else:
         raise RuntimeError('Path %s is not directory or invalid' % documents_dir)
+
+
+def handle_srt(document_path):
+    def clean_txt(t):
+        t = re.sub(r"[\'\"\\]", " ", t)
+        t = re.sub(u'\u3000', ' ', t)
+        t = re.sub(r"\t+|\n+|\r+", "", t)  # 去除非空格的空白符
+        t = re.sub(r"\s{2,}", " ", t)
+        return t
+
+    subtitles = []
+    with open(document_path, encoding='utf-8') as file:
+        all = file.readlines()
+        for i in range(0, len(all)):
+            if '-->' in all[i]:
+                subtitles.append(all[i + 1])
+                i += 1
+
+        text = '\t'.join(subtitles)
+        text = clean_txt(text)
+        # 除去32bit的unicode，只保留16bit以下的unicode，否则在java分词的时候会出错
+        text = "".join([char if ord(char) < 65535 else "?" for char in text])
+        assert "  " not in text, "Contains double space!"
+        return text
 
 
 def handle_txt(document_path):
