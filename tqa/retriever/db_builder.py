@@ -109,7 +109,7 @@ def documents_iterate(documents_dir, db_table, cursor):
                     if filename.endswith(".pptx"):
                         document_path = os.path.join(dirpath, filename)
                         # ID为相对$RAW_DIR的文档路径（带后缀）
-                        id = utils.normalize(document_path.replace(documents_dir, ''))
+                        id = utils.normalize(db_table + '/' + document_path.replace(documents_dir, ''))
                         cursor.execute(
                             "SELECT COUNT(*) FROM %s WHERE document_id = '%s'" % (db_table, utils.normalize(id)))
                         if cursor.fetchone()[0] == 0:
@@ -121,7 +121,7 @@ def documents_iterate(documents_dir, db_table, cursor):
                     # PLAIN TEXT
                     elif filename.endswith(".txt"):
                         document_path = os.path.join(dirpath, filename)
-                        id = utils.normalize(document_path.replace(documents_dir, ''))
+                        id = utils.normalize(db_table + '/' + document_path.replace(documents_dir, ''))
                         cursor.execute(
                             "SELECT COUNT(*) FROM %s WHERE document_id = '%s'" % (db_table, utils.normalize(id)))
                         if cursor.fetchone()[0] == 0:
@@ -132,7 +132,7 @@ def documents_iterate(documents_dir, db_table, cursor):
                     # SRT SUBTITLE
                     elif filename.endswith(".srt"):
                         document_path = os.path.join(dirpath, filename)
-                        id = utils.normalize(document_path.replace(documents_dir, ''))
+                        id = utils.normalize(db_table + '/' + document_path.replace(documents_dir, ''))
                         cursor.execute(
                             "SELECT COUNT(*) FROM %s WHERE document_id = '%s'" % (db_table, utils.normalize(id)))
                         if cursor.fetchone()[0] == 0:

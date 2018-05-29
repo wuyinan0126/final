@@ -124,7 +124,7 @@ class TqaThread(threading.Thread):
         # logging.info('Reused: ' + reused)
         return reused
 
-    def answer(self, question, answer):
+    def answer(self, question):
         answer_content = ""
         if IS_DEBUG:
             results = json.loads(
@@ -145,7 +145,9 @@ class TqaThread(threading.Thread):
                 answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
                 answer_content += '> %s\n\n' % result['text']
             if 'srt' in result['id']:
-                pass
+                video_name = os.path.basename(result['id'])
+                answer_content += '[课程视频（%s）](%s "课程视频")中的相关内容：\n\n' % (video_name, result['id'])
+                answer_content += '> %s\n\n' % result['text']
             if 'wiki' in result['id']:
                 url_word = result['id'].split('@')
                 url = url_word[0]
@@ -164,7 +166,7 @@ class TqaThread(threading.Thread):
 
         answer_content = self.reuse(question_title, question_description)
         if not answer_content:
-            answer_content = self.answer(question_title, answer)
+            answer_content = self.answer(question_title)
 
         if answer_content:
             answer.answer_text = answer_content

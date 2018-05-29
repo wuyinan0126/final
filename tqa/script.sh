@@ -176,7 +176,7 @@ python server.py \
     --top-k-answers 1 \
     --reader-model-path models/reader/reader_20180525_103013.mdl \
     --use-cuda False \
-    --num-workers 12 \
+    --num-workers 4 \
     --embedded-corpus-path models/embeddings/cc.zhs.300.vec \
     --embedded-corpus-bin-path models/embeddings/cc.zh.300.bin \
     --threshold 0.6
