@@ -26,7 +26,7 @@ class CoreNlpTokenizer():
         self.annotators = copy.deepcopy(kwargs.get('annotators', DEFAULTS['tokenizer_annotators']))
         self.classpath = os.path.join(DATA_DIR, kwargs.get('classpath', DEFAULTS['tokenizer_classpath']))
         self.heap = kwargs.get('heap', DEFAULTS['tokenizer_heap'])
-        self.timeout = 600000
+        self.timeout = kwargs.get('timeout', DEFAULTS['tokenizer_timeout'])
 
         # annotators: tokenize(分词), ssplit(断句), pos(词性标注), lemma(词元化), ner(命名实体识别)
         annotators = ['tokenize', 'ssplit']
@@ -41,7 +41,7 @@ class CoreNlpTokenizer():
 
         self.nlp = StanfordCoreNLP(self.classpath, memory=self.heap, lang=self.language, timeout=self.timeout)
         self.props = {
-            'timeout': '600000',
+            'timeout': str(self.timeout),
             'annotators': annotators,
             'pipelineLanguage': 'zh',
             'outputFormat': 'json',

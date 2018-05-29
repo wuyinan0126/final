@@ -41,7 +41,7 @@ for dir in AA AB AC AD AE AF AG AH AI AJ AK AL; do
     done
 done
 
-# 建立documents wiki db => 983148/994014
+# 建立documents wiki db => 983502/994014
 python retriever/db_builder.py \
     --documents-dir documents/wiki/ \
     --tokenizer-heap 5g \
@@ -171,7 +171,7 @@ python classifier/trainer.py \
 # server 相关
 # ------------------------------------------------------------------------------
 python server.py \
-    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz]' \
+    --tfidf-model-paths '[models/retriever/wiki_tfidf_2gram_16777216hash.npz, models/retriever/course_tfidf_2gram_16777216hash.npz]' \
     --tfidf-rank-k 1 \
     --top-k-answers 1 \
     --reader-model-path models/reader/reader_20180525_103013.mdl \

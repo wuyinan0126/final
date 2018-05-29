@@ -49,17 +49,20 @@ def build(documents_dir, tokenizer_heap, num_workers=None):
     cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '%s'" % db_table)
     if cursor.fetchone()[0] == 0:
         logger.info('Creating database...')
-        cursor.execute("CREATE TABLE %s ("
-                       "document_id VARCHAR(100) NOT NULL, "
-                       "document_text MEDIUMTEXT, "
-                       "document_words MEDIUMTEXT,"
-                       "document_words_ws MEDIUMTEXT,"
-                       "document_span MEDIUMTEXT,"
-                       "document_pos MEDIUMTEXT,"
-                       "document_lemma MEDIUMTEXT,"
-                       "document_ner MEDIUMTEXT,"
-                       "PRIMARY KEY ( document_id )"
-                       ") DEFAULT CHARSET=utf8mb4" % db_table)
+        cursor.execute("""
+          CREATE TABLE {table_name} (
+            document_id VARCHAR(100) NOT NULL, 
+            document_text MEDIUMTEXT,
+            document_words MEDIUMTEXT,
+            document_words_ws MEDIUMTEXT,
+            document_span MEDIUMTEXT,
+            document_pos MEDIUMTEXT,
+            document_lemma MEDIUMTEXT,
+            document_ner MEDIUMTEXT,
+            PRIMARY KEY ( document_id ),
+            INDEX [id_index] (document_id(100))
+          ) DEFAULT CHARSET=utf8mb4
+        """.format(table_name=db_table))
     else:
         logger.info('Database exists! Appending...')
 

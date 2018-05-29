@@ -134,7 +134,11 @@ class TqaCore(object):
             annotators.add('lemma')
         if self.reader.args.use_ner:
             annotators.add('ner')
-        tokenizer_opts = {'language': self.reader.args.language, 'annotators': annotators}
+        tokenizer_opts = {
+            'language': self.reader.args.language,
+            'annotators': annotators,
+            # 'timeout': 10000,
+        }
         self.num_workers = num_workers
         self.pool = Pool(
             num_workers,
@@ -235,7 +239,6 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=DEFAULTS['num_workers'])
     parser.add_argument('--top-k-answers', type=int, default=DEFAULTS['top_k_answers'])
     parser.add_argument('--threshold', type=float, default=DEFAULTS['threshold'])
-
 
     args = parser.parse_args()
     args.reader_model_path = os.path.join(DATA_DIR, args.reader_model_path)

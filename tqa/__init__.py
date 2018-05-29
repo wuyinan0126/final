@@ -25,6 +25,7 @@ DEFAULTS = {
     'tokenizer_annotators': ['pos', 'ner', 'lemma'],
     'tokenizer_classpath': 'corenlp/',
     'tokenizer_heap': '5g',
+    'tokenizer_timeout': 600000,
     # ------------------------------------------------------------------------------
     # tfidf_builder/tfidf_ranker 相关参数
     # ------------------------------------------------------------------------------

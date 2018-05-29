@@ -182,7 +182,7 @@ def build(db_table, tfidf_model_dir, ngram=2, hash_size=int(math.pow(2, 24)), nu
         'dict': document_dict
     }
     utils.save_tfidf(tfidf_model_path, tfidf, metadata)
-    logger.info("TF-IDF Metadata: " + str(metadata))
+    # logger.info("TF-IDF Metadata: " + str(metadata))
 
 
 if __name__ == '__main__':
