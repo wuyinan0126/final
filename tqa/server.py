@@ -208,7 +208,7 @@ class TqaCore(object):
         examples = []
         for i in range(len(d_tokens)):
             examples.append({
-                'id': 'BLOG',
+                'id': d_ids[i],
                 'qtext': q_tokens[0].words(),
                 'qlemma': q_tokens[0].lemma(),
                 'dtext': d_tokens[i].words(),

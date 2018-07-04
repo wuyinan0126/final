@@ -143,6 +143,7 @@ class TqaThread(threading.Thread):
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         for result in results['answers']:
+            print(result)
             result = result[0]
             # if 'course' in result['id']:
             #     filename = os.path.basename(result['id'])
@@ -163,7 +164,7 @@ class TqaThread(threading.Thread):
                 url_title = result['id'].split('@')
                 url = url_title[1]
                 title = url_title[2]
-                answer_content += '[博客（%s）](%s "维基百科")中的相关内容：\n\n' % (title, url)
+                answer_content += '[博客（%s）](%s "博客")中的相关内容：\n\n' % (title, url)
                 answer_content += '> %s\n\n' % result['text']
 
         return '' if answer_content == '' else answer_content_prefix + answer_content
