@@ -159,6 +159,12 @@ class TqaThread(threading.Thread):
                 word = url_word[-1] if len(url_word) > 1 else "词条"
                 answer_content += '[维基百科（%s）](%s "维基百科")中的相关内容：\n\n' % (word, url)
                 answer_content += '> %s\n\n' % result['text']
+            elif 'blog' in result['id']:
+                url_title = result['id'].split('@')
+                url = url_title[1]
+                title = url_title[2]
+                answer_content += '[博客（%s）](%s "维基百科")中的相关内容：\n\n' % (title, url)
+                answer_content += '> %s\n\n' % result['text']
 
         return '' if answer_content == '' else answer_content_prefix + answer_content
 

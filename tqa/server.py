@@ -247,6 +247,7 @@ class TqaCore(object):
 
         resp = self.session.request('GET', link, params=None)
         soup = BeautifulSoup(resp.content, "html.parser")
+        title = soup.find('h1', {'class': 'title-article'}).get_text()
         content = soup.find(id="article_content").get_text()
         content = re.sub(r"\t+|\n+|\r+", "", content)  # 去除非空格的空白符
         content = re.sub(r"\s{2,}", " ", content)
@@ -256,7 +257,7 @@ class TqaCore(object):
         d_tokens = self.pool.map_async(tokenize, [content])
         d_tokens = d_tokens.get()
 
-        return self.answerOne(question_title, question_all, d_tokens, ['BLOG'])
+        return self.answerOne(question_title, question_all, d_tokens, ['blog@' + link + '@' + title])
 
     def rank(self, db_table, question_title, question_all):
         logger.info("Finding closest documents...")
