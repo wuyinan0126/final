@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 from django.views.generic import CreateView, ListView, UpdateView, View
 from hitcount.views import HitCountDetailView
 from .models import (Answer, AnswerComment, AnswerVote, Question,
-                       QuestionComment, QuestionVote, UserQAProfile)
+                     QuestionComment, QuestionVote, UserQAProfile)
 from taggit.models import Tag, TaggedItem
 
 from tqa_ui.tqa.core.tqa_core import TqaThread

@@ -10,7 +10,7 @@ case $1 in
         sqlite3 tqa/tqa.sqlite3 '.read tqa/init.sql'
         ;;
     run)
-        python tqa/manage.py runserver
+        python tqa/manage.py runserver 0.0.0.0:8126
         ;;
     *)
         echo 'Usage: client.sh [init|run]'

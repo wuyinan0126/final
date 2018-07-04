@@ -37,8 +37,10 @@ class Sqlite(object):
 # ------------------------------------------------------------------------------
 
 IS_DEBUG = False
-# SERVER_URL = 'http://10.2.3.83:9126/'
-SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
+SERVER_URL = 'http://10.2.3.83:9126/'
+
+
+# SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
 
 
 class TqaThread(threading.Thread):
@@ -125,6 +127,7 @@ class TqaThread(threading.Thread):
         return reused
 
     def answer(self, question_title, question_description):
+        answer_content_prefix = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
         answer_content = ""
         if IS_DEBUG:
             results = json.loads(
@@ -134,20 +137,24 @@ class TqaThread(threading.Thread):
                 ']]}', encoding="utf-8"
             )
         else:
+            question_title = question_title.replace('@', '(AT)')
+            question_description = question_description.replace('@', '(AT)')
+
             payload = {'q': question_title + "@" + question_description}
             url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
-        for result in results['answers'][0]:
-            answer_content = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
-            if 'course' in result['id']:
-                filename = os.path.basename(result['id'])
-                answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
-                answer_content += '> %s\n\n' % result['text']
-            if 'video' in result['id']:
-                video_name = os.path.basename(result['id'])
-                answer_content += '[课程视频（%s）](%s "课程视频")中的相关内容：\n\n' % (video_name, result['id'])
-                answer_content += '> %s\n\n' % result['text']
+        for result in results['answers']:
+            result = result[0]
+            # if 'course' in result['id']:
+            #     filename = os.path.basename(result['id'])
+            #     answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])
+            #     answer_content += '> %s\n\n' % result['text']
+            # elif 'video' in result['id']:
+            #     video_name = os.path.basename(result['id'])
+            #     answer_content += '[课程视频（%s）](%s "课程视频")与你的问题相关哦～\n\n' % (video_name, result['id'])
+            #     # answer_content += '> %s\n\n' % result['text']
+            # el
             if 'wiki' in result['id']:
                 url_word = result['id'].split('@')
                 url = url_word[0]
@@ -155,7 +162,7 @@ class TqaThread(threading.Thread):
                 answer_content += '[维基百科（%s）](%s "维基百科")中的相关内容：\n\n' % (word, url)
                 answer_content += '> %s\n\n' % result['text']
 
-        return answer_content
+        return '' if answer_content == '' else answer_content_prefix + answer_content
 
     def run(self):
         answer = Answer()

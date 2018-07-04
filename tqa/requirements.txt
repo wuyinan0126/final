@@ -25,3 +25,4 @@ stanfordcorenlp
 # cd fastText && pip install .
 
 baidu-aip
+BeautifulSoup4

@@ -1,16 +1,22 @@
 import argparse
 import json
 import logging
+
+import re
+import requests
+from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from multiprocessing.pool import Pool, ThreadPool
 from multiprocessing.util import Finalize
-from urllib.parse import urlparse, parse_qs, unquote
+from urllib.parse import urlparse, parse_qs, unquote, quote
 
 import os
 
 import time
 import torch
+from selenium import webdriver
 
 from tqa import DEFAULTS, DATA_DIR, LOGS_DIR
 from tqa.reader import utils
@@ -99,8 +105,16 @@ def tokenize(question):
 
 
 class TqaCore(object):
-    def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None):
+    def __init__(self, ranker_opts, reader_opts, reuser_opts, num_workers=None, online=True):
         start = time.time()
+        self.online = online
+        if self.online:
+            self.session = requests.Session()
+            self.adapter = HTTPAdapter(pool_connections=5, pool_maxsize=5, max_retries=5)
+            self.session.mount('http://', self.adapter)
+            self.session.mount('https://', self.adapter)
+            self.header = {'Content-Type': 'application/x-www-form-urlencode'}
+            self.browser = webdriver.PhantomJS(executable_path='./phantomjs', service_log_path=os.path.devnull)
 
         logger.info('Initializing reuser...')
         bin_path = reuser_opts.get('embedded_corpus_bin_path')
@@ -174,11 +188,75 @@ class TqaCore(object):
         logger.info('Processing question: %s...' % question_title)
         logger.info('Retrieving top %d documents...' % self.tfidf_rank_k)
 
-        with ThreadPool(self.num_workers) as threads:
-            _rank = partial(self.rank, question_title=question_title, question_all=question_all)
-            results = threads.map(_rank, self.rankers.keys())
+        results = None
+        if self.online:
+            results = self.online_rank(question_title=question_title, question_all=question_all)
+
+        if not results:
+            with ThreadPool(self.num_workers) as threads:
+                _rank = partial(self.rank, question_title=question_title, question_all=question_all)
+                results = threads.map(_rank, self.rankers.keys())
+
         logger.info('Answer elapse = %d' % (time.time() - start_time))
         return results
+
+    def answerOne(self, question_title, question_all, d_tokens, d_ids):
+        logger.info("Tokenizing question...")
+        q_tokens = self.pool.map_async(tokenize, [question_title])
+        q_tokens = q_tokens.get()
+
+        examples = []
+        for i in range(len(d_tokens)):
+            examples.append({
+                'id': 'BLOG',
+                'qtext': q_tokens[0].words(),
+                'qlemma': q_tokens[0].lemma(),
+                'dtext': d_tokens[i].words(),
+                'dlemma': d_tokens[i].lemma(),
+                'dpos': d_tokens[i].pos(),
+                'dner': d_tokens[i].ner(),
+            })
+
+        logger.info("Batchify...")
+        examples_in_batch = utils.batchify(
+            [utils.vectorize(example, self.reader, single_answer=False) for example in examples]
+        )
+        start, end, score = self.reader.predict(examples_in_batch, self.top_k_answers)
+
+        # 从start, end生成答案
+        results = []
+        for i in range(len(start)):
+            print(d_ids[i])
+            for j in range(len(start[i])):
+                answer = d_tokens[i].slice(start[i][j], end[i][j] + 1).untokenize()
+                text = d_tokens[i].answer_sentence(start[i][j], end[i][j] + 1).untokenize()
+                results.append({'score': score[i][j].item(), 'answer': answer, 'text': text, 'id': d_ids[i]})
+
+        return results
+
+    def online_rank(self, question_title, question_all):
+        question_title = re.sub('[\s+\.\!\/_,$%^*(+\"\')]+|[+——()?【】“”！，。？、~@#￥%……&*（）]+', "", question_title)
+        url = 'https://so.csdn.net/so/search/s.do?q=' + quote(question_title) + '&t=blog'
+        self.browser.get(url)
+        html = self.browser.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        link = soup.find_all('dl', {"class": "search-list J_search"})[0] \
+            .find('dd', {'class': 'search-link'}) \
+            .find('a')['href']
+        logger.info('First Blog: %s' % link)
+
+        resp = self.session.request('GET', link, params=None)
+        soup = BeautifulSoup(resp.content, "html.parser")
+        content = soup.find(id="article_content").get_text()
+        content = re.sub(r"\t+|\n+|\r+", "", content)  # 去除非空格的空白符
+        content = re.sub(r"\s{2,}", " ", content)
+        # print(content)
+
+        logger.info("Tokenizing document...")
+        d_tokens = self.pool.map_async(tokenize, [content])
+        d_tokens = d_tokens.get()
+
+        return self.answerOne(question_title, question_all, d_tokens, ['BLOG'])
 
     def rank(self, db_table, question_title, question_all):
         logger.info("Finding closest documents...")
@@ -191,42 +269,12 @@ class TqaCore(object):
         if len(documents_ids) == 0:
             return None
 
-        logger.info("Tokenizing question...")
-        q_tokens = self.pool.map_async(tokenize, [question_title])
+        logger.info("Tokenizing document...")
         _build_tokens = partial(build_tokens, db_table=db_table)
         d_rank_k_tokens = self.pool.map_async(_build_tokens, documents_ids)
-
-        q_tokens = q_tokens.get()
         d_rank_k_tokens = d_rank_k_tokens.get()
 
-        examples = []
-        for i in range(len(d_rank_k_tokens)):
-            examples.append({
-                'id': documents_ids[i],
-                'qtext': q_tokens[0].words(),
-                'qlemma': q_tokens[0].lemma(),
-                'dtext': d_rank_k_tokens[i].words(),
-                'dlemma': d_rank_k_tokens[i].lemma(),
-                'dpos': d_rank_k_tokens[i].pos(),
-                'dner': d_rank_k_tokens[i].ner(),
-            })
-
-        logger.info("Batchify...")
-        examples_in_batch = utils.batchify(
-            [utils.vectorize(example, self.reader, single_answer=False) for example in examples]
-        )
-        start, end, score = self.reader.predict(examples_in_batch, self.top_k_answers)
-
-        # 从start, end生成答案
-        results = []
-        for i in range(len(start)):
-            print(documents_ids[i])
-            for j in range(len(start[i])):
-                answer = d_rank_k_tokens[i].slice(start[i][j], end[i][j] + 1).untokenize()
-                text = d_rank_k_tokens[i].answer_sentence(start[i][j], end[i][j] + 1).untokenize()
-                results.append({'score': score[i][j].item(), 'answer': answer, 'text': text, 'id': documents_ids[i]})
-
-        return results
+        return self.answerOne(question_title, question_all, d_rank_k_tokens, documents_ids)
 
 
 if __name__ == '__main__':
@@ -242,6 +290,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=DEFAULTS['num_workers'])
     parser.add_argument('--top-k-answers', type=int, default=DEFAULTS['top_k_answers'])
     parser.add_argument('--threshold', type=float, default=DEFAULTS['threshold'])
+    parser.add_argument('--online', type='bool', default=DEFAULTS['online'])
 
     args = parser.parse_args()
     args.reader_model_path = os.path.join(DATA_DIR, args.reader_model_path)
@@ -266,6 +315,7 @@ if __name__ == '__main__':
             'threshold': args.threshold,
         },
         num_workers=args.num_workers,
+        online=args.online,
     )
 
     server = TqaHttpServer(core)

@@ -3,6 +3,8 @@ from __future__ import unicode_literals, absolute_import
 
 import django
 
+ALLOWED_HOSTS = ['*']
+
 DEBUG = True
 DATABASES = {
         'default': {
