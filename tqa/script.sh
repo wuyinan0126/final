@@ -198,4 +198,5 @@ python server.py \
     --num-workers 4 \
     --embedded-corpus-path models/embeddings/cc.zhs.300.vec \
     --embedded-corpus-bin-path models/embeddings/cc.zh.300.bin \
-    --threshold 0.6
+    --threshold 0.6 \
+    --online True

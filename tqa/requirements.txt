@@ -26,3 +26,4 @@ stanfordcorenlp
 
 baidu-aip
 BeautifulSoup4
+selenium

@@ -37,10 +37,8 @@ class Sqlite(object):
 # ------------------------------------------------------------------------------
 
 IS_DEBUG = False
-SERVER_URL = 'http://10.2.3.83:9126/'
-
-
-# SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
+# SERVER_URL = 'http://10.2.3.83:9126/'
+SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
 
 
 class TqaThread(threading.Thread):
