@@ -143,8 +143,10 @@ class TqaThread(threading.Thread):
             results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         for result in results['answers']:
-            print(result)
-            result = result[0]
+            try:
+                result = result[0]
+            except:
+                result = result
             # if 'course' in result['id']:
             #     filename = os.path.basename(result['id'])
             #     answer_content += '[课程资源（%s）](%s "课程资源")中的相关内容：\n\n' % (filename, result['id'])

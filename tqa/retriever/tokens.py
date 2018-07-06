@@ -12,7 +12,7 @@ class Tokens(object):
     POS = 3  # part of speech: 词性: 'UH'
     LEMMA = 4  # 词元: 'hello'
     NER = 5  # named entity recognition: 命名实体识别: 'O'
-    MARKS = ['!', '?', '。', '！', '？']  # 切割标志
+    MARKS = ['!', '?', '。', '！', '？', '. ']  # 切割标志
 
     def __init__(self, data, annotators=DEFAULTS['tokenizer_annotators'], opts=None):
         self.data = data
@@ -44,7 +44,7 @@ class Tokens(object):
             if self.data[q][self.TEXT] in self.MARKS:
                 break
         p = p if p == 0 else p + 1
-        new_tokens.data = self.data[p: q]
+        new_tokens.data = self.data[p: q + 1]
         return new_tokens
 
     def words(self, uncased=False):
