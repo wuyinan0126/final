@@ -113,7 +113,13 @@ class TqaCore(object):
             self.adapter = HTTPAdapter(pool_connections=5, pool_maxsize=5, max_retries=5)
             self.session.mount('http://', self.adapter)
             self.session.mount('https://', self.adapter)
-            self.header = {'Content-Type': 'application/x-www-form-urlencode'}
+            self.header = {
+                'Content-Type': 'application/x-www-form-urlencode',
+                'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+            }
+            for key, value in enumerate(self.header):
+                capability_key = 'phantomjs.page.customHeaders.{}'.format(key)
+                webdriver.DesiredCapabilities.PHANTOMJS[capability_key] = value
             self.browser = webdriver.PhantomJS(executable_path='./phantomjs', service_log_path=os.path.devnull)
 
         logger.info('Initializing reuser...')

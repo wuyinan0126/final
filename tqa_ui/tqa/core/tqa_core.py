@@ -37,8 +37,10 @@ class Sqlite(object):
 # ------------------------------------------------------------------------------
 
 IS_DEBUG = False
-# SERVER_URL = 'http://10.2.3.83:9126/'
-SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
+SERVER_URL = 'http://10.2.3.83:9126/'
+
+
+# SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
 
 
 class TqaThread(threading.Thread):
@@ -177,6 +179,8 @@ class TqaThread(threading.Thread):
         answer.user = self.user
         question_title = self.question.title
         question_description = self.question.description
+        print(self.question.tagged_items)
+        # print(self.question.tags)
 
         answer_content = self.reuse(question_title, question_description)
         if not answer_content:
