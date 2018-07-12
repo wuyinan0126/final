@@ -2,10 +2,10 @@
 
 from django.db import migrations, models
 import taggit.managers
+import django_markdown.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('taggit', '0002_auto_20150616_2121'),
         ('qa', '0012_remove_question_views'),
@@ -34,12 +34,19 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='question',
+            name='description',
+            field=django_markdown.models.MarkdownField(verbose_name='问题描述 (请详细描述问题，支持markdown语法)'),
+        ),
+        migrations.AlterField(
+            model_name='question',
             name='tags',
-            field=taggit.managers.TaggableManager(help_text='A comma-separated list of tags.', through='qa.MyTaggedItem', to='taggit.Tag', verbose_name='Tags'),
+            field=taggit.managers.TaggableManager(help_text='A comma-separated list of tags.',
+                                                  through='qa.MyTaggedItem', to='taggit.Tag',
+                                                  verbose_name='标签 (以逗号分割，推荐自动生成!)'),
         ),
         migrations.AlterField(
             model_name='question',
             name='title',
-            field=models.CharField(max_length=200),
+            field=models.CharField(max_length=200, verbose_name='问题标题 (请简要概括问题)'),
         ),
     ]

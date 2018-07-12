@@ -36,7 +36,7 @@ class Sqlite(object):
 # 自动回答线程 Begin
 # ------------------------------------------------------------------------------
 
-IS_DEBUG = False
+USE_SERVER = False
 SERVER_URL = 'http://10.2.3.83:9126/'
 
 
@@ -48,6 +48,11 @@ class TqaThread(threading.Thread):
         super().__init__()
         self.question = question
         self.user = User.objects.get(pk=1)
+
+    @staticmethod
+    def get_tags(question_title, question_description):
+        # TODO
+        return ['大数据']
 
     def reuse(self, question_title, question_description):
         conn = Sqlite().get_conn()
@@ -77,14 +82,9 @@ class TqaThread(threading.Thread):
             description = row[2]
             questions.append({'id': id, 'title': title, 'desc': description})
 
-        if IS_DEBUG:
-            result = json.loads(
-                '{"id": 4, "score": 0.6}', encoding="utf-8"
-            )
-        else:
-            payload = {'s': json.dumps(questions)}
-            url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
-            result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+        payload = {'s': json.dumps(questions)}
+        url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
+        result = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         reused = ''
         most_similar_id = result['id']
@@ -129,20 +129,13 @@ class TqaThread(threading.Thread):
     def answer(self, question_title, question_description):
         answer_content_prefix = "导学小助手为您找到了以下相关的资料，如果解决了您的问题，记得点赞哦～\n\n"
         answer_content = ""
-        if IS_DEBUG:
-            results = json.loads(
-                '{"answers": [['
-                '{"score": 0.5, "answer": "答案1", "text": "文本1文本1文本1文本1文本1文本1文本1文本1", "id": "https://zh.wikipedia.org/wiki?curid=1@测试1"},'
-                '{"score": 0.4, "answer": "答案2", "text": "文本2文本2文本2文本2文本2文本2文本2文本2", "id": "course/subdir/测试2.pptx"}'
-                ']]}', encoding="utf-8"
-            )
-        else:
-            question_title = question_title.replace('@', '(AT)')
-            question_description = question_description.replace('@', '(AT)')
 
-            payload = {'q': question_title + "@" + question_description}
-            url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
-            results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+        question_title = question_title.replace('@', '(AT)')
+        question_description = question_description.replace('@', '(AT)')
+
+        payload = {'q': question_title + "@" + question_description}
+        url = SERVER_URL + '?' + urlencode(payload, quote_via=quote_plus)
+        results = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
 
         for result in results['answers']:
             try:
@@ -179,16 +172,15 @@ class TqaThread(threading.Thread):
         answer.user = self.user
         question_title = self.question.title
         question_description = self.question.description
-        print(self.question.tagged_items)
-        # print(self.question.tags)
 
-        answer_content = self.reuse(question_title, question_description)
-        if not answer_content:
-            answer_content = self.answer(question_title, question_description)
+        if USE_SERVER:
+            answer_content = self.reuse(question_title, question_description)
+            if not answer_content:
+                answer_content = self.answer(question_title, question_description)
 
-        if answer_content:
-            answer.answer_text = answer_content
-            answer.save()
+            if answer_content:
+                answer.answer_text = answer_content
+                answer.save()
 
 # ------------------------------------------------------------------------------
 # 自动回答线程 End

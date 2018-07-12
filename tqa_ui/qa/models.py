@@ -2,6 +2,7 @@ from annoying.fields import AutoOneToOneField
 from django.conf import settings
 from django.db import models
 from django.db.models import F
+from django.forms import TextInput
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.text import slugify
 from django_markdown.models import MarkdownField
@@ -57,10 +58,15 @@ class MyTaggedItem(TaggedItem):
 class Question(models.Model, HitCountMixin):
     """Model class to contain every question in the forum"""
     slug = models.SlugField(max_length=200, allow_unicode=True)
-    title = models.CharField(max_length=200, blank=False)
-    description = MarkdownField()
+    title = models.CharField(
+        max_length=200, blank=False, verbose_name="问题标题 (请简要概括问题)",
+    )
+    description = MarkdownField(verbose_name="问题描述 (请详细描述问题，支持markdown语法)")
     pub_date = models.DateTimeField('date published', auto_now_add=True)
-    tags = TaggableManager(through=MyTaggedItem)
+    tags = TaggableManager(
+        through=MyTaggedItem,
+        verbose_name="标签 (以逗号分割，推荐自动生成!)", help_text="",
+    )
     reward = models.IntegerField(default=0)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     closed = models.BooleanField(default=False)
