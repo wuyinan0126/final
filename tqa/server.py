@@ -196,7 +196,10 @@ class TqaCore(object):
 
         results = None
         if self.online:
-            results = self.online_rank(question_title=question_title, question_all=question_all)
+            try:
+                results = self.online_rank(question_title=question_title, question_all=question_all)
+            except:
+                results = None
 
         if not results:
             with ThreadPool(self.num_workers) as threads:

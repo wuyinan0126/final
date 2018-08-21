@@ -28,7 +28,6 @@ class QuestionForm(forms.ModelForm):
             self.fields['tags'].widget = TextInput(attrs={'size': 66, 'maxlength': 88})
             # 标签栏是否强制
             self.fields['tags'].required = False
-            print(dir(self.fields['tags']))
         except KeyError:
             pass
 

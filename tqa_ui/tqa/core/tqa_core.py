@@ -39,8 +39,14 @@ class Sqlite(object):
 USE_SERVER = False
 SERVER_URL = 'http://10.2.3.83:9126/'
 
-
 # SERVER_URL = 'http://tqa.23.99.113.200.nip.io:8080/'
+all_tags = {
+    'Hadoop': [],
+    'HDFS': ['NameNode', 'DataNode', 'SecondaryNameNode', '数据块', '名称节点', '数据节点', '第二名称节点', '分布式文件系统', '元数据节点',
+             '从元数据节点'],
+    'MapReduce': ['Mapper', 'Reducer', 'MapR', 'Map', 'Reduce', 'Shuffle'],
+    'YARN': ['JobTracker', 'JobTask', 'ResourceManager', 'NodeManager', '资源管理器', '节点管理器', 'JobHistoryServer']
+}
 
 
 class TqaThread(threading.Thread):
@@ -51,8 +57,19 @@ class TqaThread(threading.Thread):
 
     @staticmethod
     def get_tags(question_title, question_description):
-        # TODO
-        return ['大数据']
+
+        text = (question_title + question_description).lower()
+        tag_score = {}
+        for tag_k, tag_v in all_tags.items():
+            tag_score[tag_k] = 0 if tag_k.lower() not in text else 100
+            for key_word in tag_v:
+                if key_word.lower() in text:
+                    tag_score[tag_k] += 1
+
+        tag_score = sorted(tag_score.items(), key=lambda d: d[1], reverse=True)
+        if [tag_score[0][1]] == 0:
+            return 'BigData'
+        return [tag_score[0][0]]
 
     def reuse(self, question_title, question_description):
         conn = Sqlite().get_conn()
